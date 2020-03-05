@@ -1,9 +1,10 @@
 CFLAGS += -DBOARD_LAUNCHPAD=1
 
-CONTIKI_TARGET_DIRS += launchpad common
+CONTIKI_TARGET_DIRS += launchpad common radio
 
 BOARD_SOURCEFILES += board.c launchpad-sensors.c leds-arch.c button-sensor.c
 BOARD_SOURCEFILES += ext-flash.c board-spi.c
+BOARD_SOURCEFILES += sx1276-arch.c sx1276.c spi.c
 
 ### Signal that we can be programmed with cc2538-bsl
 BOARD_SUPPORTS_BSL=1

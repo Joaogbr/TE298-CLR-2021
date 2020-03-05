@@ -118,6 +118,8 @@ set_rf_params(void)
 
   NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &val);
   printf(" RF: Channel %d\n", val);
+  NETSTACK_RADIO.get_value(RADIO_PARAM_PAN_ID, &val);
+  printf(" PAN ID: %d\n", val);
 
 #if STARTUP_CONF_VERBOSE
   {
@@ -191,7 +193,7 @@ main(void)
   printf("Starting " CONTIKI_VERSION_STRING "\n");
   printf("With DriverLib v%u.%u\n", DRIVERLIB_RELEASE_GROUP,
          DRIVERLIB_RELEASE_BUILD);
-  printf(BOARD_STRING "\n");
+  puts(BOARD_STRING);
   printf("IEEE 802.15.4: %s, Sub-GHz: %s, BLE: %s, Prop: %s\n",
          ti_lib_chipinfo_supports_ieee_802_15_4() == true ? "Yes" : "No",
          ti_lib_chipinfo_chip_family_is_cc13xx() == true ? "Yes" : "No",
@@ -217,7 +219,7 @@ main(void)
     printf(", Channel Check Interval: %u ticks",
            NETSTACK_RDC.channel_check_interval());
   }
-  printf("\n");
+  puts("");
 
   netstack_init();
 

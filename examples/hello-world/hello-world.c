@@ -40,6 +40,9 @@
 #include "contiki.h"
 
 #include <stdio.h> /* For printf() */
+
+static struct etimer et_led;
+
 /*---------------------------------------------------------------------------*/
 PROCESS(hello_world_process, "Hello world process");
 AUTOSTART_PROCESSES(&hello_world_process);
@@ -49,6 +52,14 @@ PROCESS_THREAD(hello_world_process, ev, data)
   PROCESS_BEGIN();
 
   printf("Hello, world\n");
+
+  etimer_set(&et_led, CLOCK_SECOND * 1);
+  while(1) {
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et_led));
+	printf("Toggle LED\n");
+	leds_toggle(LEDS_RED);
+    etimer_reset(&et_led);
+  }
   
   PROCESS_END();
 }

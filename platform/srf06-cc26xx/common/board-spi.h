@@ -67,6 +67,8 @@
  */
 void board_spi_open(uint32_t bit_rate, uint32_t clk_pin);
 
+void board_spi_enable(uint32_t bit_rate, uint32_t clk_pin);
+
 /**
  * \brief Close the SPI interface
  * \return True when successful.
@@ -93,7 +95,6 @@ void board_spi_flush(void);
  * recommended to call board_spi_close() at the end of an operation.
  */
 bool board_spi_read(uint8_t *buf, size_t length);
-
 /**
  * \brief Write to an SPI device
  * \param buf The buffer with the data to write

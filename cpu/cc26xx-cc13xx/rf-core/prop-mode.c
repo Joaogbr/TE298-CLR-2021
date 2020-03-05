@@ -56,6 +56,7 @@
 #include "rf-core/rf-ble.h"
 #include "rf-core/prop-mode.h"
 #include "rf-core/dot-15-4g.h"
+#include "rf-core/lna.h"
 /*---------------------------------------------------------------------------*/
 /* RF core and RF HAL API */
 #include "hw_rfc_dbell.h"
@@ -486,6 +487,10 @@ rx_on_prop(void)
     return RF_CORE_CMD_OK;
   }
 
+  init_pin();
+  //RX_HGM();
+  RX_LGM();
+
   /* Put CPE in RX using the currently configured parameters */
   ret = rf_cmd_prop_rx();
 
@@ -506,6 +511,9 @@ rx_off_prop(void)
   if(!rf_is_on()) {
     return RF_CORE_CMD_OK;
   }
+
+  RX_CLEAR();
+  //POWER_DOWN();
 
   /* Send a CMD_ABORT command to RF Core */
   if(rf_core_send_cmd(CMDR_DIR_CMD(CMD_ABORT), &cmd_status) != RF_CORE_CMD_OK) {
@@ -669,6 +677,9 @@ transmit(unsigned short transmit_len)
 
   if(!rf_is_on()) {
     was_off = 1;
+    init_pin();
+    //TX_HGM();
+    TX_LGM();
     if(on() != RF_CORE_CMD_OK) {
       PRINTF("transmit: on() failed\n");
       return RADIO_TX_ERR;
@@ -755,6 +766,7 @@ transmit(unsigned short transmit_len)
   rx_on_prop();
 
   if(was_off) {
+    POWER_DOWN();
     off();
   }
 

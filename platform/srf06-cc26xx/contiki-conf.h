@@ -62,7 +62,7 @@
 #endif
 
 #ifndef NETSTACK_CONF_RDC
-#define NETSTACK_CONF_RDC     contikimac_driver
+#define NETSTACK_CONF_RDC     nullrdc_driver //contikimac_driver
 #endif
 
 /*
@@ -110,7 +110,7 @@
 #endif /* CPU_FAMILY_CC13XX */
 
 #if CC13XX_CONF_PROP_MODE
-#define NETSTACK_CONF_RADIO        prop_mode_driver
+#define NETSTACK_CONF_RADIO        sx1276_driver //prop_mode_driver
 
 #ifndef RF_CORE_CONF_CHANNEL
 #define RF_CORE_CONF_CHANNEL                      0
@@ -309,7 +309,7 @@
  * @{
  */
 #ifndef ROM_BOOTLOADER_ENABLE
-#define ROM_BOOTLOADER_ENABLE              0
+#define ROM_BOOTLOADER_ENABLE              1
 #endif
 /** @} */
 /*---------------------------------------------------------------------------*/

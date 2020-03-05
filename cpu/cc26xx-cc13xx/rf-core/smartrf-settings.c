@@ -60,7 +60,7 @@
 #ifdef SMARTRF_SETTINGS_CONF_RSSI_OFFSET_779_930
 #define SMARTRF_SETTINGS_RSSI_OFFSET_779_930 SMARTRF_SETTINGS_CONF_RSSI_OFFSET_779_930
 #else
-#define SMARTRF_SETTINGS_RSSI_OFFSET_779_930 0x00FB88A3
+#define SMARTRF_SETTINGS_RSSI_OFFSET_779_930 0x000188A3
 #endif
 /*---------------------------------------------------------------------------*/
 #ifdef SMARTRF_SETTINGS_CONF_OVERRIDE_TRIM_OFFSET
@@ -179,9 +179,9 @@ rfc_CMD_PROP_RADIO_DIV_SETUP_t smartrf_settings_cmd_prop_radio_div_setup =
   .symbolRate.preScale = 0xf,
   .symbolRate.rateWord = 0x8000,
   .rxBw = 0x24,
-  .preamConf.nPreamBytes = 0x3,
+  .preamConf.nPreamBytes = 0x4,
   .preamConf.preamMode = 0x0,
-  .formatConf.nSwBits = 0x18,
+  .formatConf.nSwBits = 0x20,
   .formatConf.bBitReversal = 0x0,
   .formatConf.bMsbFirst = 0x1,
   .formatConf.fecMode = 0x0,
@@ -189,10 +189,10 @@ rfc_CMD_PROP_RADIO_DIV_SETUP_t smartrf_settings_cmd_prop_radio_div_setup =
   /* 7: .4g mode with dynamic whitening and CRC choice */
   .formatConf.whitenMode = 0x7,
   .config.frontEndMode = 0x00, /* Set by the driver */
-  .config.biasMode = 0x00,     /* Set by the driver */
+  .config.biasMode = 0x1,     /* Set by the driver */
   .config.analogCfgMode = 0x0,
   .config.bNoFsPowerUp = 0x0,
-  .txPower = 0x00, /* Driver sets correct value */
+  .txPower = 0x00ce, /*26 dBm*/
   .pRegOverride = overrides,
   .intFreq = 0x8000,
   .centerFreq = 868,
