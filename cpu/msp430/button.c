@@ -38,7 +38,8 @@
 static struct button_msg button_msg;
 
 static struct process *selecting_proc;
-
+#if 1
+{
 void
 button_init(struct process *proc)
 {
@@ -70,4 +71,5 @@ ISR(PORT2, __button_interrupt)
     }
     LPM4_EXIT;
   }
+}
 }

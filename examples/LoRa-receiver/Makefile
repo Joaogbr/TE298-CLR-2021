@@ -1,5 +1,5 @@
 ifndef TARGET
-TARGET=srf06-cc26xx
+TARGET=expfr5969
 endif
 
 CONTIKI_PROJECT = receiver receiver.hex

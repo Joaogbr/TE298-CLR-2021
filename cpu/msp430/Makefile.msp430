@@ -1,4 +1,5 @@
 # $Id: Makefile.msp430,v 1.35 2011/01/19 07:30:31 adamdunkels Exp $
+# $Id: Makefile.msp430,v 1.36 2017/12/06 07:30:31 davidrodenasherraiz Exp $
 
 ifdef nodeid
 CFLAGS += -DNODEID=$(nodeid)
@@ -27,6 +28,11 @@ ifndef CONTIKI_CPU_FAM_DIR
  ifneq (,$(findstring msp430f2,$(MCU)))
   CONTIKI_CPU_FAM_DIR = f2xxx f1xxx
  endif
+ifndef CONTIKI_CPU_FAM_DIR
+ ifneq (,$(findstring msp430fr59,$(MCU)))
+  CONTIKI_CPU_FAM_DIR = fr59xx
+ endif
+endif
 endif
 ifndef CONTIKI_CPU_FAM_DIR
  ${error Unhandled MSP430 family: "$(MCU)"}
@@ -34,8 +40,14 @@ endif
 
 CONTIKI_CPU_DIRS = $(CONTIKI_CPU_FAM_DIR) . dev
 
-MSP430     = msp430.c flash.c clock.c leds.c leds-arch.c \
-             watchdog.c lpm.c rtimer-arch.c
+MSP430     = msp430.c clock.c leds.c leds-arch.c \
+			 watchdog.c lpm.c rtimer-arch.c
+ifneq (,$(findstring msp430fr,$(MCU)))
+ MSP430    += fram.c
+else
+ MSP430    += flash.c
+endif
+
 UIPDRIVERS = me.c me_tabs.c slip.c crc16.c
 ELFLOADER  = elfloader.c elfloader-msp430.c symtab.c
 
@@ -51,8 +63,8 @@ ELFLOADER = elfloader-msp430x.c symtab.c
 endif
 
 CONTIKI_TARGET_SOURCEFILES += $(MSP430) \
-                              $(SYSAPPS) $(ELFLOADER) \
-                              $(UIPDRIVERS)
+							  $(SYSAPPS) $(ELFLOADER) \
+							  $(UIPDRIVERS)
 
 CONTIKI_SOURCEFILES        += $(CONTIKI_TARGET_SOURCEFILES)
 
@@ -106,7 +118,7 @@ CUSTOM_RULE_C_TO_O = 1
 
 define FINALIZE_CYGWIN_DEPENDENCY
 sed -e 's/ \([A-Z]\):\\/ \/cygdrive\/\L\1\//' -e 's/\\/\//g' \
-	    <$(@:.o=.P) >$(@:.o=.d); \
+		<$(@:.o=.P) >$(@:.o=.d); \
 rm -f $(@:.o=.P)
 endef
 
@@ -134,8 +146,15 @@ AS       = msp430-as
 AR       = msp430-ar
 NM       = msp430-nm
 OBJCOPY  = msp430-objcopy
+OBJDUMP  = msp430-objdump
 STRIP    = msp430-strip
 BSL      = msp430-bsl
+SIZE     = msp430-size --format=SysV
+READELF  = msp430-readelf
+MSPDEBUG = mspdebug
+GDB      = msp430-gdb
+
+OBJDUMP_FLAGS += -DS
 
 # From version 4.6.x, mspgcc does not support generic MCU identifiers such as
 # msp430x1611 in contrast to msp430f1611
@@ -197,6 +216,27 @@ PROJECT_OBJECTFILES += ${addprefix $(OBJECTDIR)/,$(CONTIKI_TARGET_MAIN:.c=.o)}
 
 ### Compilation rules
 
+ifneq (,$(findstring msp430fr,$(MCU)))
+
+CUSTOM_RULE_LINK=1
+%.elf: %.co $(PROJECT_OBJECTFILES) $(PROJECT_LIBRARIES) contiki-$(TARGET).a
+	$(TRACE_LD)
+	$(Q)$(LD) $(LDFLAGS) $(TARGET_STARTFILES) ${filter-out %.a,$^} \
+		${filter %.a,$^} $(TARGET_LIBFILES) -o $@
+
+%.$(TARGET): %.elf %.lst
+	cp $< $@
+	@echo ">>>> Size of Firmware <<<<"
+	$(SIZE) $<
+
+%.lst: %.elf
+	$(OBJDUMP) $(OBJDUMP_FLAGS) $< > $@
+
+%.hex: %.elf
+	$(OBJCOPY) $^ -O ihex $@
+
+else
+
 %-stripped.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 	$(STRIP) --strip-unneeded -g -x $@
@@ -221,6 +261,8 @@ ifdef IAR
 else
 %.ihex: %.$(TARGET)
 	$(OBJCOPY) $^ -O ihex $@
+endif
+
 endif
 
 $(CONTIKI)/tools/mspsim/build.xml:

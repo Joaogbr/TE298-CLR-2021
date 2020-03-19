@@ -35,13 +35,12 @@
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  */
 #include "contiki.h"
+#include <msp430.h>
 #include "sx1276.h"
 #include "sx1276Regs-Fsk.h"
 #include "sx1276Regs-LoRa.h"
 #include "spi.h"
-#include "board.h"
-#include "ti-lib.h"
-#include "gpio-interrupt.h"
+#include "isr_compat.h"
 #include "sys/clock.h"
 
 #include <math.h>
@@ -66,7 +65,17 @@ static uint8_t RxTxBuffer[RX_BUFFER_SIZE];
 sx1276_t sx1276;
 
 /*---------------------------------------------------------------------------*/
-#define DIO0  (ti_lib_gpio_read_dio(DIO_0) != 0)
+#define DIO0  ((P1IN & BIT3) != 0)
+/*
+ * Enable/Disable DIO interrupt
+ */
+#define ENABLE_DIO0_IT\
+  do {\
+    sx1276_write(REG_LR_IRQFLAGS, RFLR_IRQFLAGS_RXDONE);\
+    P1IFG &= ~BIT3;\
+    P1IE |= BIT3;\
+  } while(0)
+#define DISABLE_DIO0_IT (P1IE &= ~BIT3)
 /*---------------------------------------------------------------------------*/
 
 typedef struct {
@@ -153,36 +162,6 @@ static uint8_t sx1276_get_fsk_bandwidthregvalue(uint32_t bandwidth) {
   while( 1 );
 }
 
-void interrupt_handler(uint8_t ioid)
-{
-    printf("Interrupt handling has started\n");
-    if (ioid == DIO_0) // (P1IFG & BIT3)
-    {
-      sx1276_on_dio0irq();
-    }
-      // Reset the interrupt flag
-    ti_lib_ioc_int_clear(DIO_0);
-    while(ti_lib_ioc_int_status(DIO_0)); // Dummy read after clearing interrupt (datasheet)
-    printf("Interrupt handling has ended\n");
-}
-
-/*---------------------------------------------------------------------------*/
-void (*inthandler)(uint8_t ioid) = interrupt_handler;
-/*---------------------------------------------------------------------------*/
-
-void enable_dio0_it(uint32_t dioNumber){
-  sx1276_write(REG_LR_IRQFLAGS, RFLR_IRQFLAGS_RXDONE); // Clear IRQ
-  ti_lib_ioc_int_clear(dioNumber);
-  while(ti_lib_ioc_int_status(dioNumber)); // Dummy read after clearing interrupt (datasheet)
-  gpio_interrupt_register_handler(dioNumber, inthandler); // ti_lib_ioc_int_register(inthandler);
-  ti_lib_ioc_int_enable(dioNumber);
-}
-
-void disable_dio0_it(uint32_t dioNumber){
-  ti_lib_ioc_int_disable(dioNumber);
-  // ti_lib_ioc_int_unregister();
-}
-
 void sx1276_init(RadioEvents_t *events) {
 
   RadioEvents = events;
@@ -192,11 +171,11 @@ void sx1276_init(RadioEvents_t *events) {
   //TimerInit( &RxTimeoutTimer, SX1276OnTimeoutIrq );
   //TimerInit( &RxTimeoutSyncWord, SX1276OnTimeoutIrq );
 
-  // Setting the NRESET pin up defined in spi.c
-  ti_lib_ioc_pin_type_gpio_output(RESET);
-  ti_lib_gpio_set_dio(RESET);
+    // Setting the NRESET pin up defined in spi.c
+  P1DIR |= RESET;
+  P1OUT |= RESET;
   // Waiting 10ms (datasheet)
-  clock_delay_usec(10000);
+  delay_ms(10);
 
   // Init irq interrupts DIO_0 on Port1 Bit 3
   dio0irq_init();
@@ -206,10 +185,8 @@ void sx1276_init(RadioEvents_t *events) {
   sx1276_rxchain_calibration();
 
   sx1276_set_opmode(RF_OPMODE_SLEEP);
-  sx1276.Settings.State = RF_IDLE;
-  clock_delay_usec(1000);
 
-  //eint(); // __enable_interrupt();
+  eint(); // __enable_interrupt();
 
   uint8_t i;
 
@@ -225,10 +202,11 @@ void sx1276_init(RadioEvents_t *events) {
 }
 
 void sx1276_reset() {
-  ti_lib_gpio_clear_dio(RESET); // Set output to 0
-  clock_delay_usec(1000); // Wait 1 ms
-  ti_lib_gpio_set_dio(RESET); // Set output to 1
-  clock_delay_usec(6000); // Wait 6 ms
+
+  P1OUT &= ~RESET;
+  delay_ms(1); // Wait 1 ms
+  P1OUT |= RESET;
+  delay_ms(6); // Wait 6 ms
 }
 
 
@@ -730,7 +708,7 @@ uint32_t sx1276_get_timeonair(radio_modem_t modem, uint8_t pktLen) {
 void sx1276_send(uint8_t *buffer, uint8_t size) {
   uint32_t txTimeout = 0;
 
-  disable_dio0_it(DIO_0);
+  DISABLE_DIO0_IT;
 
   switch( sx1276.Settings.Modem )
   {
@@ -772,7 +750,7 @@ void sx1276_send(uint8_t *buffer, uint8_t size) {
 
           sx1276_set_opmode(RF_OPMODE_STANDBY);
 
-          clock_delay_usec(1000);
+          delay_ms(1);
 
           if(sx1276.Settings.Ook.FixLen == true)
           {
@@ -791,7 +769,6 @@ void sx1276_send(uint8_t *buffer, uint8_t size) {
           sx1276_write_fifo( buffer, size );
 
           sx1276_set_opmode(RF_OPMODE_TRANSMITTER);
-          clock_delay_usec(1000);
           txTimeout = sx1276.Settings.Ook.TxTimeout;
 
         }
@@ -809,6 +786,7 @@ void sx1276_send(uint8_t *buffer, uint8_t size) {
             sx1276_write(REG_LR_INVERTIQ, ((sx1276_read(REG_LR_INVERTIQ) & RFLR_INVERTIQ_TX_MASK & RFLR_INVERTIQ_RX_MASK) | RFLR_INVERTIQ_RX_OFF | RFLR_INVERTIQ_TX_OFF));
             sx1276_write(REG_LR_INVERTIQ2, RFLR_INVERTIQ2_OFF );
           }
+
           sx1276.Settings.LoRaPacketHandler.Size = size;
 
           // Initializes the payload size
@@ -823,7 +801,8 @@ void sx1276_send(uint8_t *buffer, uint8_t size) {
           {
             sx1276_set_opmode(RF_OPMODE_STANDBY);
             sx1276.Settings.State = RF_IDLE;
-            clock_delay_usec(1000);
+
+            delay_ms(1);
 
           }
           // Write payload buffer
@@ -840,11 +819,11 @@ void sx1276_set_sleep(void)
 {
     // TimerStop( &RxTimeoutTimer );
     // TimerStop( &TxTimeoutTimer );
-  printf("Sx1276 entering sleep mode\n");
-  disable_dio0_it(DIO_0);
+  PRINTF("Sx1276 entering sleep mode\n");
+  DISABLE_DIO0_IT;
   sx1276_set_opmode(RF_OPMODE_SLEEP);
   sx1276.Settings.State = RF_IDLE;
-  clock_delay_usec(1000);
+  delay_ms(1);
 }
 
 void sx1276_disable_sync_word(void)
@@ -957,7 +936,7 @@ void sx1276_set_rx(uint32_t timeout) {
 
           /************************************************/
           // sx1276_on_dio0irq();
-          printf("DIO0 interrupt called\n");
+          PRINTF("DIO0 interrupt called\n\r");
           /************************************************/
 
           if(sx1276.Settings.LoRa.FreqHopOn == true)
@@ -1006,7 +985,6 @@ void sx1276_set_rx(uint32_t timeout) {
   if(sx1276.Settings.Modem == MODEM_FSK)
   {
     sx1276_set_opmode(RF_OPMODE_RECEIVER);
-    clock_delay_usec(1000);
 
     if(rxContinuous == false)
     {
@@ -1022,17 +1000,13 @@ void sx1276_set_rx(uint32_t timeout) {
   {
     if(rxContinuous == true)
     {
-      enable_dio0_it(DIO_0);
+      ENABLE_DIO0_IT;
       sx1276_set_opmode(RFLR_OPMODE_RECEIVER);
-      sx1276.Settings.State = RF_RX_RUNNING;
-      clock_delay_usec(1000);
     }
     else
     {
-      enable_dio0_it(DIO_0);
+      ENABLE_DIO0_IT;
       sx1276_set_opmode(RFLR_OPMODE_RECEIVER_SINGLE);
-      sx1276.Settings.State = RF_RX_RUNNING;
-      clock_delay_usec(1000);
     }
   }
 }
@@ -1107,7 +1081,6 @@ void sx1276_set_tx(uint32_t timeout) {
   sx1276.Settings.State = RF_TX_RUNNING;
   //TimerStart( &TxTimeoutTimer );
   sx1276_set_opmode(RF_OPMODE_TRANSMITTER);
-  clock_delay_usec(1000);
 }
 
 
@@ -1155,38 +1128,31 @@ void sx1276_set_opmode(uint8_t opmode) {
 }
 
 void sx1276_write(uint8_t addr, uint8_t data) {
-  spi_enable();
   spi_chipEnable();
   // __delay_cycles(20);
-  // clock_delay_usec(5000);
+  // clock_delay(5);
 
   spi_transfer(addr | 0x80);
   spi_transfer(data);
 
   spi_chipDisable();
-  spi_disable();
 }
 
 void sx1276_write_buffer(uint8_t addr, uint8_t* data, uint8_t len) {
-  uint8_t len0 = len;
   if (len > 0)
   {
-    spi_enable();
     spi_chipEnable();
     // __delay_cycles(20);
-    // clock_delay_usec(5000);
-    spi_transfer(addr | 0x80);
+    spi_send(addr | 0x80);
 
     while (len--)
       {
-        printf("Byte %u sent: %u\n", (len0 -len), *data);
-        spi_transfer(*data++);
+        spi_send(*data++);
       }
 
-    // spi_ready();
+    spi_txready();
 
     spi_chipDisable();
-    spi_disable();
   }
 }
 
@@ -1195,48 +1161,37 @@ void sx1276_write_fifo(uint8_t *data, uint8_t len) {
 }
 
 uint8_t sx1276_read(uint8_t addr) {
-  spi_enable();
   spi_chipEnable();
   // __delay_cycles(20);
-  // clock_delay_usec(5000);
   spi_transfer(addr & 0x7f);
   spi_transfer(0x00);
 
   uint8_t result = spi_buf;
 
   spi_chipDisable();
-  spi_disable();
 
   return result;
 }
 
 void sx1276_read_buffer(uint8_t addr, uint8_t* data, uint8_t len) {
-  uint8_t len0 = len;
   if (len > 0)
   {
-    spi_enable();
     spi_chipEnable();
     // __delay_cycles(20);
-    // clock_delay_usec(5000);
-    spi_transfer(addr & 0x7f); // Should be a transfer and not a send
+    spi_send(addr & 0x7f);
 
     while (len--)
     {
       spi_transfer(0x00);
-      *data  = spi_buf;
-      printf("Byte %u read: %u\n", (len0 -len), *data);
-      data++;
+      *data++  = spi_buf;
     }
 
     spi_chipDisable();
-    spi_disable();
   }
 }
 
 void sx1276_read_fifo(uint8_t *data, uint8_t len) {
-  printf("PKT read has started\n");
   sx1276_read_buffer(0, data, len);
-  printf("PKT read has ended\n");
 }
 
 void sx1276_on_dio0irq() {
@@ -1406,9 +1361,9 @@ void sx1276_on_dio0irq() {
               if((RadioEvents != 0) && (RadioEvents->RxDone != 0))
               {
                 RadioEvents->RxDone(RxTxBuffer, sx1276.Settings.LoRaPacketHandler.Size, sx1276.Settings.LoRaPacketHandler.RssiValue, sx1276.Settings.LoRaPacketHandler.SnrValue);
-                printf("RxDone\n");
-                printf("Radio Layer Pkt Size: %d\n", sx1276.Settings.LoRaPacketHandler.Size);
-                printf("Radio Layer RSSI: %d\n", sx1276.Settings.LoRaPacketHandler.RssiValue);
+                PRINTF("RxDone\n");
+                PRINTF("Radio Layer Pkt Size: %d\n", sx1276.Settings.LoRaPacketHandler.Size);
+                PRINTF("Radio Layer RSSI: %d\n", sx1276.Settings.LoRaPacketHandler.RssiValue);
               }
             }
             break;
@@ -1430,7 +1385,6 @@ void sx1276_on_dio0irq() {
               if((RadioEvents != 0) && (RadioEvents->TxDone != 0))
               {
                 RadioEvents->TxDone( );
-                printf("TxDone\n");
               }
               break;
           }
@@ -1438,4 +1392,17 @@ void sx1276_on_dio0irq() {
     default:
     break;
   }
+}
+
+
+#pragma vector=PORT1_VECTOR
+__interrupt void port1_interrupt_handler(void)
+{
+    if (P1IFG & BIT3)
+    {
+        sx1276_on_dio0irq();
+
+    }
+    // Reset the interrupt flag
+    P1IFG &= ~BIT3;
 }

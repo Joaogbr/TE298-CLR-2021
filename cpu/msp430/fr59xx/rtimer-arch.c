@@ -2,6 +2,7 @@
  * Copyright (c) 2011, Swedish Institute of Computer Science
  * All rights reserved.
  *
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,59 +26,81 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * This file is part of the Contiki operating system.
+ *
+ */
+
+/**
+ * \file
+ *         MSP430-specific rtimer code for MSP430X (ported from MSP430-specific rtimer code, author: Adam Dunkels).
+ * \Contiki port, author
+ *         Andrea Gaglione <and.gaglione@gmail.com>
+ *         David Rodenas-Herraiz <dr424@cam.ac.uk>
+ *
  */
 
 #include "contiki.h"
-#include "contiki-net.h"
-
-#include "dev/spi.h"
-#include "dev/cc2520/cc2520.h"
+#include "sys/energest.h"
+#include "sys/rtimer.h"
+#include "sys/process.h"
+#include "dev/watchdog.h"
 #include "isr_compat.h"
 
-#ifdef CC2520_CONF_SFD_TIMESTAMPS
-#define CONF_SFD_TIMESTAMPS CC2520_CONF_SFD_TIMESTAMPS
-#endif /* CC2520_CONF_SFD_TIMESTAMPS */
-
-#ifndef CONF_SFD_TIMESTAMPS
-#define CONF_SFD_TIMESTAMPS 0
-#endif /* CONF_SFD_TIMESTAMPS */
-
-#ifdef CONF_SFD_TIMESTAMPS
-#include "cc2520-arch-sfd.h"
+#define DEBUG 0
+#if DEBUG
+#include <stdio.h>
+#define PRINTF(...) printf(__VA_ARGS__)
+#else
+#define PRINTF(...)
 #endif
 
 /*---------------------------------------------------------------------------*/
-ISR(CC2520_IRQ, cc2520_port1_interrupt)
+ISR(TIMER1_A0, timera0)
 {
-  //printf("CC2520_IRQ\n");
   ENERGEST_ON(ENERGEST_TYPE_IRQ);
 
-  if(cc2520_interrupt()) {
+  watchdog_start();
+
+  rtimer_run_next();
+
+  if(process_nevents() > 0) {
     LPM4_EXIT;
   }
+
+  watchdog_stop();
 
   ENERGEST_OFF(ENERGEST_TYPE_IRQ);
 }
 /*---------------------------------------------------------------------------*/
 void
-cc2520_arch_init(void)
+rtimer_arch_init(void)
 {
-  spi_init();
+  dint();
 
-  /* all input by default, set these as output */
-  CC2520_CSN_PORT(DIR) |= BV(CC2520_CSN_PIN);
-  CC2520_VREG_PORT(DIR) |= BV(CC2520_VREG_PIN);
-  CC2520_RESET_PORT(DIR) |= BV(CC2520_RESET_PIN);
+  /* CCR0 interrupt enabled, interrupt occurs when timer equals CCR0. */
+  TA1CCTL0 = CCIE;
 
-  CC2520_FIFOP_PORT(DIR) &= ~(BV(CC2520_FIFOP_PIN));
-  CC2520_FIFO_PORT(DIR) &= ~(BV(CC2520_FIFO_PIN));
-  CC2520_CCA_PORT(DIR) &= ~(BV(CC2520_CCA_PIN));
-  CC2520_SFD_PORT(DIR) &= ~(BV(CC2520_SFD_PIN));
+  /* Enable interrupts. */
+  eint();
+}
+/*---------------------------------------------------------------------------*/
+rtimer_clock_t
+rtimer_arch_now(void)
+{
+  rtimer_clock_t t1, t2;
+  do {
+    t1 = TA1R;
+    t2 = TA1R;
+  } while(t1 != t2);
+  return t1;
+}
+/*---------------------------------------------------------------------------*/
+void
+rtimer_arch_schedule(rtimer_clock_t t)
+{
+  PRINTF("rtimer_arch_schedule time %u\n", t);
 
-#if CONF_SFD_TIMESTAMPS
-  cc2520_arch_sfd_init();
-#endif
-
-  CC2520_SPI_DISABLE();                /* Unselect radio. */
+  TA1CCR0 = t;
 }
 /*---------------------------------------------------------------------------*/

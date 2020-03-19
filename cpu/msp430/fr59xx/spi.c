@@ -2,6 +2,7 @@
  * Copyright (c) 2011, Swedish Institute of Computer Science
  * All rights reserved.
  *
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,59 +26,52 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * This file is part of the Contiki operating system.
+ *
+ */
+
+/*
+ * \Contiki port, author 
+ *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  */
 
 #include "contiki.h"
-#include "contiki-net.h"
 
-#include "dev/spi.h"
-#include "dev/cc2520/cc2520.h"
-#include "isr_compat.h"
+/*
+ * This is SPI initialization code for the MSP430X architecture.
+ *
+ */
 
-#ifdef CC2520_CONF_SFD_TIMESTAMPS
-#define CONF_SFD_TIMESTAMPS CC2520_CONF_SFD_TIMESTAMPS
-#endif /* CC2520_CONF_SFD_TIMESTAMPS */
+unsigned char spi_busy = 0;
 
-#ifndef CONF_SFD_TIMESTAMPS
-#define CONF_SFD_TIMESTAMPS 0
-#endif /* CONF_SFD_TIMESTAMPS */
+/*
+ * Initialize SPI bus.
+ */
 
-#ifdef CONF_SFD_TIMESTAMPS
-#include "cc2520-arch-sfd.h"
-#endif
-
-/*---------------------------------------------------------------------------*/
-ISR(CC2520_IRQ, cc2520_port1_interrupt)
-{
-  //printf("CC2520_IRQ\n");
-  ENERGEST_ON(ENERGEST_TYPE_IRQ);
-
-  if(cc2520_interrupt()) {
-    LPM4_EXIT;
-  }
-
-  ENERGEST_OFF(ENERGEST_TYPE_IRQ);
-}
-/*---------------------------------------------------------------------------*/
 void
-cc2520_arch_init(void)
+spi_init(void)
 {
-  spi_init();
+  // Initialize ports for communication with SPI units.
 
-  /* all input by default, set these as output */
-  CC2520_CSN_PORT(DIR) |= BV(CC2520_CSN_PIN);
-  CC2520_VREG_PORT(DIR) |= BV(CC2520_VREG_PIN);
-  CC2520_RESET_PORT(DIR) |= BV(CC2520_RESET_PIN);
+  UCB0CTLW0 |=  UCSWRST;                // put eUSCI_B in reset state
+  UCB0CTLW0 |=  UCSSEL_2;               // smclk while e_USCI is reset
+  UCB0CTLW0 |= (UCMSB + UCMST + UCSYNC + UCCKPL); // MSB-first 8-bit, Master, Synchronous, 3 pin SPI master, no ste, watch-out for clock-phase UCCKPH
 
-  CC2520_FIFOP_PORT(DIR) &= ~(BV(CC2520_FIFOP_PIN));
-  CC2520_FIFO_PORT(DIR) &= ~(BV(CC2520_FIFO_PIN));
-  CC2520_CCA_PORT(DIR) &= ~(BV(CC2520_CCA_PIN));
-  CC2520_SFD_PORT(DIR) &= ~(BV(CC2520_SFD_PIN));
+  UCB0BR1 = 0x00;                       // baudrate = SMCLK / 2
+  UCB0BR0 = 0x02;
 
-#if CONF_SFD_TIMESTAMPS
-  cc2520_arch_sfd_init();
-#endif
+  /* Select Peripheral functionality */
+  P1SEL1 |= BV(MOSI) | BV(MISO);
+  P2SEL1 |= BV(SCK);
 
-  CC2520_SPI_DISABLE();                /* Unselect radio. */
+  /* Configure as outputs (SIMO, CLK). */
+  P1DIR |= BV(MOSI);
+  P2DIR |= BV(SCK);
+
+  // Clear pending interrupts before enable!!!
+  UCB0IE &= ~UCRXIFG;
+  UCB0IE &= ~UCTXIFG;
+  UCB0CTLW0 &= ~UCSWRST;         // Remove RESET before enabling interrupts
+
 }
-/*---------------------------------------------------------------------------*/

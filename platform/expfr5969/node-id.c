@@ -2,6 +2,7 @@
  * Copyright (c) 2011, Swedish Institute of Computer Science
  * All rights reserved.
  *
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,59 +26,62 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * This file is part of the Contiki operating system.
+ *
  */
 
-#include "contiki.h"
-#include "contiki-net.h"
+/**
+ * \Contiki port, author 
+ *         Rajeev Piyare <rajeev.piyare@hotmail.com>
+ * \Adopted from:
+ *         Andrea Gaglione <and.gaglione@gmail.com>
+ *         David Rodenas-Herraiz <dr424@cam.ac.uk>
+ */
 
-#include "dev/spi.h"
-#include "dev/cc2520/cc2520.h"
-#include "isr_compat.h"
 
-#ifdef CC2520_CONF_SFD_TIMESTAMPS
-#define CONF_SFD_TIMESTAMPS CC2520_CONF_SFD_TIMESTAMPS
-#endif /* CC2520_CONF_SFD_TIMESTAMPS */
+#include "sys/node-id.h"
+#include "contiki-conf.h"
 
-#ifndef CONF_SFD_TIMESTAMPS
-#define CONF_SFD_TIMESTAMPS 0
-#endif /* CONF_SFD_TIMESTAMPS */
-
-#ifdef CONF_SFD_TIMESTAMPS
-#include "cc2520-arch-sfd.h"
-#endif
+unsigned short node_id = 0;
+unsigned char node_mac[8];
 
 /*---------------------------------------------------------------------------*/
-ISR(CC2520_IRQ, cc2520_port1_interrupt)
+void
+node_id_restore(void)
 {
-  //printf("CC2520_IRQ\n");
-  ENERGEST_ON(ENERGEST_TYPE_IRQ);
-
-  if(cc2520_interrupt()) {
-    LPM4_EXIT;
+  /*
+  uint8_t *infomem;
+  infomem = (uint8_t *) 0x1800;
+  uint8_t i;
+  if(infomem[0] == 0xab && infomem[1] == 0xcd) {
+    for(i = 0; i < 8; i++) {
+      node_mac[i] = infomem[2 + i];
+    }
+  } else {
+    node_mac[0] = 0xDA; // Hardcoded for EXP-MSP430FR5731
+    node_mac[1] = 0x0A; // Hardcoded for Revision A
+    node_mac[3] = 0x00; // Hardcoded to arbitrary even number so that the 802.15.4 MAC address
+                        // is compatible with an Ethernet MAC address - byte 0 (byte 2 in the DS ID)
+    node_mac[3] = 0x00; // Hardcoded
+    node_mac[4] = 0x00; // Hardcoded
+    node_mac[5] = 0x01; // Hardcoded
+    node_mac[6] = 0x02; // Hardcoded
+    node_mac[7] = 0x03; // Hardcoded
   }
-
-  ENERGEST_OFF(ENERGEST_TYPE_IRQ);
+  node_id = node_mac[7] | (node_mac[6] << 2);
+  */
+  node_id = 0;
 }
 /*---------------------------------------------------------------------------*/
 void
-cc2520_arch_init(void)
+node_id_burn(unsigned short id)
 {
-  spi_init();
 
-  /* all input by default, set these as output */
-  CC2520_CSN_PORT(DIR) |= BV(CC2520_CSN_PIN);
-  CC2520_VREG_PORT(DIR) |= BV(CC2520_VREG_PIN);
-  CC2520_RESET_PORT(DIR) |= BV(CC2520_RESET_PIN);
-
-  CC2520_FIFOP_PORT(DIR) &= ~(BV(CC2520_FIFOP_PIN));
-  CC2520_FIFO_PORT(DIR) &= ~(BV(CC2520_FIFO_PIN));
-  CC2520_CCA_PORT(DIR) &= ~(BV(CC2520_CCA_PIN));
-  CC2520_SFD_PORT(DIR) &= ~(BV(CC2520_SFD_PIN));
-
-#if CONF_SFD_TIMESTAMPS
-  cc2520_arch_sfd_init();
-#endif
-
-  CC2520_SPI_DISABLE();                /* Unselect radio. */
+  /*
+   * The node's mac address is placed in Information memory of MSPFR5739 (128 B)
+   * See Page 49 in SLAS639 at http://www.ti.com/lit/pdf/SLAS639
+   */
+   // ToDo
 }
 /*---------------------------------------------------------------------------*/

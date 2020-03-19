@@ -29,7 +29,10 @@
  * This file is part of the Contiki operating system.
  *
  */
-
+/*
+ * Revised:
+ *         David Rodenas-Herraiz <dr424@cam.ac.uk>
+ */
 #include "contiki.h"
 #include "dev/watchdog.h"
 #include "isr_compat.h"
@@ -106,7 +109,7 @@ watchdog_init(void)
      initialization. */
   counter = 0;
   watchdog_stop();
-#if CONTIKI_TARGET_WISMOTE
+#if CONTIKI_TARGET_WISMOTE || CONTIKI_TARGET_EXPFR5969
   SFRIFG1 &= ~WDTIFG;
   SFRIE1 |= WDTIE;
 #else

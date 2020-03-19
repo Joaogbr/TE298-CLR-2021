@@ -44,6 +44,27 @@ static CC_INLINE int  name##_READ() {return (P##port##IN & (1 << bit));}      \
 static CC_INLINE void name##_MAKE_OUTPUT() {P##port##DIR |= 1 << bit;}        \
 static CC_INLINE void name##_MAKE_INPUT() {P##port##DIR &= ~(1 << bit);}
 
+#define HWCONF_PINx(name, port, bit, register)                                           \
+static CC_INLINE void name##_SELECT() {P##port##SEL##register &= ~(1 << bit);}          \
+static CC_INLINE void name##_SELECT_IO() {P##port##SEL##register &= ~(1 << bit);}       \
+static CC_INLINE void name##_SELECT_PM() {P##port##SEL##register |= 1 << bit;}          \
+static CC_INLINE void name##_SET() {P##port##OUT |= 1 << bit;}                \
+static CC_INLINE void name##_CLEAR() {P##port##OUT &= ~(1 << bit);}           \
+static CC_INLINE int  name##_READ() {return (P##port##IN & (1 << bit));}      \
+static CC_INLINE void name##_MAKE_OUTPUT() {P##port##DIR |= 1 << bit;}        \
+static CC_INLINE void name##_MAKE_INPUT() {P##port##DIR &= ~(1 << bit);}
+
+#define HWCONF_IRQx(name, port, bit)                                           \
+static CC_INLINE void name##_ENABLE_IRQ() {P##port##IE |= 1 << bit;}          \
+static CC_INLINE void name##_DISABLE_IRQ() {P##port##IE &= ~(1 << bit);}      \
+static CC_INLINE int  name##_IRQ_ENABLED() {return P##port##IE & (1 << bit);} \
+static CC_INLINE void name##_IRQ_EDGE_SELECTD() {P##port##IES |= 1 << bit;}   \
+static CC_INLINE void name##_IRQ_EDGE_SELECTU() {P##port##IES &= ~(1 << bit);}\
+static CC_INLINE int  name##_CHECK_IRQ() {return P##port##IFG & (1 << bit);} \
+static CC_INLINE int  name##_CLEAR_IRQ() {return P##port##IFG &= ~(1 << bit);} \
+static CC_INLINE int  name##_ENABLE_PULLUP() {return P##port##REN |= 1 << bit;} \
+static CC_INLINE int  name##_IRQ_PORT() {return port;}
+
 #define HWCONF_IRQ(name, port, bit)                                           \
 static CC_INLINE void name##_ENABLE_IRQ() {P##port##IE |= 1 << bit;}          \
 static CC_INLINE void name##_DISABLE_IRQ() {P##port##IE &= ~(1 << bit);}      \

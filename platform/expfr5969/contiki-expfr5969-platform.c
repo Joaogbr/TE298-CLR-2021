@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2011, Swedish Institute of Computer Science
+ * Copyright (c) 2010, Swedish Institute of Computer Science
  * All rights reserved.
+ *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,59 +26,23 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * This file is part of the Contiki operating system.
+ *
  */
 
-#include "contiki.h"
-#include "contiki-net.h"
+/**
+ * \Contiki port, author 
+ *         Rajeev Piyare <rajeev.piyare@hotmail.com>
+ */
 
-#include "dev/spi.h"
-#include "dev/cc2520/cc2520.h"
-#include "isr_compat.h"
+#include "dev/button-sensor.h"
 
-#ifdef CC2520_CONF_SFD_TIMESTAMPS
-#define CONF_SFD_TIMESTAMPS CC2520_CONF_SFD_TIMESTAMPS
-#endif /* CC2520_CONF_SFD_TIMESTAMPS */
+SENSORS(&button_sensor);
+// SENSORS(&button_sensor, &wur_sensor);
 
-#ifndef CONF_SFD_TIMESTAMPS
-#define CONF_SFD_TIMESTAMPS 0
-#endif /* CONF_SFD_TIMESTAMPS */
-
-#ifdef CONF_SFD_TIMESTAMPS
-#include "cc2520-arch-sfd.h"
-#endif
-
-/*---------------------------------------------------------------------------*/
-ISR(CC2520_IRQ, cc2520_port1_interrupt)
-{
-  //printf("CC2520_IRQ\n");
-  ENERGEST_ON(ENERGEST_TYPE_IRQ);
-
-  if(cc2520_interrupt()) {
-    LPM4_EXIT;
-  }
-
-  ENERGEST_OFF(ENERGEST_TYPE_IRQ);
-}
-/*---------------------------------------------------------------------------*/
 void
-cc2520_arch_init(void)
+init_platform(void)
 {
-  spi_init();
-
-  /* all input by default, set these as output */
-  CC2520_CSN_PORT(DIR) |= BV(CC2520_CSN_PIN);
-  CC2520_VREG_PORT(DIR) |= BV(CC2520_VREG_PIN);
-  CC2520_RESET_PORT(DIR) |= BV(CC2520_RESET_PIN);
-
-  CC2520_FIFOP_PORT(DIR) &= ~(BV(CC2520_FIFOP_PIN));
-  CC2520_FIFO_PORT(DIR) &= ~(BV(CC2520_FIFO_PIN));
-  CC2520_CCA_PORT(DIR) &= ~(BV(CC2520_CCA_PIN));
-  CC2520_SFD_PORT(DIR) &= ~(BV(CC2520_SFD_PIN));
-
-#if CONF_SFD_TIMESTAMPS
-  cc2520_arch_sfd_init();
-#endif
-
-  CC2520_SPI_DISABLE();                /* Unselect radio. */
+  process_start(&sensors_process, NULL);
 }
-/*---------------------------------------------------------------------------*/
