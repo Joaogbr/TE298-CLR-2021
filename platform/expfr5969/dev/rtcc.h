@@ -54,20 +54,20 @@
 #define SEC_ADDR               0x00
 #define MIN_ADDR               0x01
 #define HOUR_ADDR              0x02
-#define DAY_ADDR               0x03
-#define MONTHS_ADDR            0x04
-#define YEAR_ADDR              0x05
-#define WEEKDAYLS_ADDR         0x06
+#define WEEKDAYLS_ADDR         0x03
+#define DAY_ADDR               0x04
+#define MONTHS_ADDR            0x05
+#define YEAR_ADDR              0x06
 
 /* Alarm registers */
 #define MINUTES_ALARM_ADDR     0x00
 #define HOURS_ALARM_ADDR       0x01
-#define DAY_ALARMS_ADDR        0x02
-#define WEEKDAYS_ALARM_ADDR    0x03
+#define WEEKDAYS_ALARM_ADDR    0x02
+#define DAY_ALARMS_ADDR        0x03
 
 /* -------------------------------------------------------------------------- */
-#define RTCC_TD_MAP_SIZE           (WEEKDAYLS_ADDR + 1)
-#define RTCC_ALARM_MAP_SIZE        (WEEKDAYS_ALARM_ADDR + 1)
+#define RTCC_TD_MAP_SIZE           (YEAR_ADDR + 1)
+#define RTCC_ALARM_MAP_SIZE        (DAY_ALARMS_ADDR + 1)
 /* -------------------------------------------------------------------------- */
 enum {
   RTCC_24H_MODE = 0,

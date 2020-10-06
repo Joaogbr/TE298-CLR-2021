@@ -36,21 +36,24 @@
  */
 /*---------------------------------------------------------------------------
 Description: Contiki radio interface implementation for SX1276 Driver
------------------------------------------------------------------------------*/                                                             
+-----------------------------------------------------------------------------*/
 #include "contiki.h"
 #include "net/packetbuf.h"
 #include "net/rime/rimestats.h"
 #include "net/netstack.h"
 #include "sys/energest.h"
+#include "sys/node-id.h"
 #include "sx1276-arch.h"
 #include "sx1276-config.h"
 #include "sx1276.h"
+#include "sx1276Regs-Fsk.h"
+#include "sx1276Regs-LoRa.h"
 #include "spi.h"
 #include <string.h>
 #include <stdio.h>
 #include "sys/clock.h"
 /*---------------------------------------------------------------------------*/
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -60,8 +63,11 @@ Description: Contiki radio interface implementation for SX1276 Driver
 #define PRINTDEBUG(...)
 #endif
 /*---------------------------------------------------------------------------*/
+//unsigned short node_id;
+/*---------------------------------------------------------------------------*/
 int8_t rx_last_snr = 0;
 int16_t rx_last_rssi = 0;
+bool CadDetected = false;
 
 // Set current params to initial value
 uint8_t sx1276_sf       = LORA_SPREADING_FACTOR;
@@ -89,7 +95,7 @@ static int sx1276_radio_prepare(const void *payload, unsigned short payload_len)
 static int sx1276_radio_transmit(unsigned short payload_len);
 static int sx1276_radio_send(const void *data, unsigned short len);
 static int sx1276_radio_read(void *buf, unsigned short bufsize);
-//static int sx1276_radio_channel_clear(void);
+static int sx1276_radio_channel_clear(void);
 static int sx1276_radio_receiving_packet(void);
 static int sx1276_radio_pending_packet(void);
 /*---------------------------------------------------------------------------*/
@@ -104,7 +110,7 @@ void OnTxDone( void )
   sx1276_set_rx(RX_TIMEOUT_VALUE);
 }
 /*---------------------------------------------------------------------------*/
-void OnRxDone( uint8_t *payload, uint16_t size, int8_t rssi, int8_t snr )
+void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
 {
 	rx_msg_size = size;
 	memcpy(rx_msg_buf, payload, rx_msg_size);
@@ -113,12 +119,12 @@ void OnRxDone( uint8_t *payload, uint16_t size, int8_t rssi, int8_t snr )
    // save Rssi and SNR
   rx_last_snr = snr;
   rx_last_rssi = rssi;
-	 
+
 	printf("Incoming MSG: Size: %d bytes, RSSI: %d, SNR: %d\n", rx_msg_size, rssi, snr);
 
   process_poll(&sx1276_process);
   sx1276_radio_on();
-	
+
 }
 /*---------------------------------------------------------------------------*/
 void OnTxTimeout( void )
@@ -146,6 +152,23 @@ void OnRxError( void )
   sx1276_set_sleep();
 }
 /*---------------------------------------------------------------------------*/
+void OnCadDone( bool channelActivityDetected)
+{
+	sx1276_set_sleep();
+	// User app
+	if(channelActivityDetected)
+	{
+		PRINTF("Channel Activity Detected\n");
+		CadDetected = true;
+	}
+	else
+	{
+		PRINTF("Channel Activity not Detected\n");
+		CadDetected = false;
+	}
+	sx1276.Settings.State = CAD_DONE;
+}
+/*---------------------------------------------------------------------------*/
 PROCESS_THREAD(sx1276_process, ev, data)
 {
   uint8_t len;
@@ -165,9 +188,9 @@ PROCESS_THREAD(sx1276_process, ev, data)
     len = sx1276_radio_read(packetbuf_dataptr(), PACKETBUF_SIZE);
     packetbuf_set_datalen(len);
     /* Turn on radio to keep listening */
-    sx1276_radio_on();
+    //sx1276_radio_on();
     NETSTACK_RDC.input();
-    
+
   }
   PROCESS_END();
 }
@@ -177,7 +200,7 @@ PROCESS_THREAD(sx1276_process, ev, data)
 static int
 sx1276_radio_init(void)
 {
-  PRINTF("\nInitializing sx1276\n");
+  PRINTF("Initializing sx1276\n");
 
   spi_init();
 
@@ -187,7 +210,8 @@ sx1276_radio_init(void)
   RadioEvents.TxTimeout = OnTxTimeout;
   RadioEvents.RxTimeout = OnRxTimeout;
   RadioEvents.RxError = OnRxError;
-	
+	RadioEvents.CadDone = OnCadDone;
+
   sx1276_init(&RadioEvents);
 
   sx1276_set_channel( RF_FREQUENCY );
@@ -208,9 +232,9 @@ sx1276_radio_init(void)
   sx1276_cr       = LORA_CODINGRATE;
   sx1276_tx_power = TX_OUTPUT_POWER;
 
-  printf("SX1276 initialized with Freq:%luHz, TX Pwr: %ddBm, BW:%d, SF:%d, CR:%d\n\r",
-          RF_FREQUENCY, TX_OUTPUT_POWER, LORA_BANDWIDTH,
-          LORA_SPREADING_FACTOR, LORA_CODINGRATE); 
+  printf("SX1276 initialized with Freq: %lu Hz, TX Pwr: %d dBm, BW: %lu Hz, SF: %d, CR: %d\n",
+          RF_FREQUENCY, TX_OUTPUT_POWER, LORA_BANDWIDTH_HZ,
+          LORA_SPREADING_FACTOR, LORA_CODINGRATE);
 
 	pending_packets = 0;
   ENERGEST_ON(ENERGEST_TYPE_LISTEN);
@@ -224,7 +248,7 @@ sx1276_radio_on(void)
   /* Enable RX */
   sx1276_set_rx(RX_TIMEOUT_VALUE);
   ENERGEST_ON(ENERGEST_TYPE_LISTEN);
-  PRINTF("Radio ON\n");
+  PRINTF("Radio has been turned on\n");
 	// Start reset timer
 	 // etimer_set(&et_reset_rx, RESET_RX_DURATION );
 	 // // assign it to correct process
@@ -236,11 +260,11 @@ static int
 sx1276_radio_off(void)
 {
 	// stop reset timer
-	// etimer_stop(&et_reset_rx); 
-  sx1276_set_rx(RX_TIMEOUT_VALUE); //need timers
-  ENERGEST_ON(ENERGEST_TYPE_LISTEN);
-  PRINTF("Radio off\n");
-  //sx1276_set_sleep();
+	// etimer_stop(&et_reset_rx);
+  // sx1276_set_rx(RX_TIMEOUT_VALUE); // need timers (Why?)
+  ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
+	sx1276_set_sleep();
+  PRINTF("Radio has been turned off\n");
 	return 0;
 }
 /*---------------------------------------------------------------------------*/
@@ -251,7 +275,7 @@ sx1276_radio_read(void *buf, unsigned short bufsize)
 	  pending_packets --;
 
 	  if (bufsize < rx_msg_size) {
-			PRINTF("WARNING: Buffer size is small\n\r");
+			PRINTF("WARNING: Buffer size is small\n");
 			 return 0;
 		}
 		else {
@@ -264,17 +288,23 @@ sx1276_radio_read(void *buf, unsigned short bufsize)
   return 0;
 }
 /*---------------------------------------------------------------------------*/
-// static int
-// sx1276_radio_channel_clear(void)
-// {
-//   bool channel_clear;
-//     //TODO: FIX!
-//   channel_clear = 1;
+static int
+sx1276_radio_channel_clear(void)
+{
+	PRINTF("Channel Activity Detection\n");
+	sx1276_start_cad();
+	while (sx1276.Settings.State != CAD_DONE);
+	sx1276.Settings.State = RF_IDLE;
+	return !CadDetected;
+	//   bool channel_clear;
+	//     //TODO: FIX!
+	//   channel_clear = 1;
 
-//   PRINTF("CHANNEL CLEAR %d\n", channel_clear);
-//   return channel_clear;
-// 	//return Radio.IsChannelFree(MODEM_LORA, RF_FREQUENCY, LORA_CLEAR_CHANNEL_RSSI_THRESHOLD);
-// }
+	//   PRINTF("CHANNEL CLEAR %d\n", channel_clear);
+	//   return channel_clear;
+	// 	   //return Radio.IsChannelFree(MODEM_LORA, RF_FREQUENCY, LORA_CLEAR_CHANNEL_RSSI_THRESHOLD);
+	//   return 0;
+}
 /*---------------------------------------------------------------------------*/
 static uint8_t *packet_payload = NULL;
 static uint16_t packet_payload_len = 0;
@@ -301,12 +331,13 @@ sx1276_radio_prepare(const void *payload, unsigned short payload_len)
 static int
 sx1276_radio_transmit(unsigned short payload_len)
 {
+	PRINTF("Transmission has begun\n");
   sx1276_send(packet_payload, packet_payload_len);
   ENERGEST_ON(ENERGEST_TYPE_TRANSMIT);
-	tx_ongoing =1;
+	tx_ongoing = 1;
   packet_is_prepared = 0;
 
-  PRINTF("Transmission ended\n");
+  PRINTF("Transmission has ended\n");
   process_poll(&sx1276_process);
   return RADIO_TX_OK;
 }
@@ -331,6 +362,139 @@ sx1276_radio_pending_packet(void)
   return pending_packets;
 }
 /*---------------------------------------------------------------------------*/
+static radio_result_t
+sx1276_radio_get_value(radio_param_t param, radio_value_t *value)
+{
+	uint8_t paconfig;
+	uint32_t Freq;
+	switch(param) {
+  case RADIO_PARAM_POWER_MODE:
+		if((sx1276_read(REG_OPMODE) & RFLR_OPMODE_CAD) == RF_OPMODE_SLEEP || RF_OPMODE_STANDBY){
+			*value = RADIO_POWER_MODE_OFF;
+		}
+		else{
+			*value = RADIO_POWER_MODE_ON;
+		}
+		return RADIO_RESULT_OK;
+	case RADIO_PARAM_CHANNEL:
+	Freq = (double)(   ((uint32_t) sx1276_read(REG_FRFMSB) << 16) |
+														((uint32_t) sx1276_read(REG_FRFMID) << 8 ) |
+														((uint32_t) sx1276_read(REG_FRFLSB))) * (double) FREQ_STEP;
+		*value = (Freq - RF_FREQUENCY_MIN)/LORA_BANDWIDTH_HZ;
+		return RADIO_RESULT_OK;
+	case RADIO_PARAM_PAN_ID:
+		*value = sx1276_read(REG_LR_SYNCWORD);
+		return RADIO_RESULT_OK;
+	case RADIO_PARAM_16BIT_ADDR:
+		*value = node_id;
+		return RADIO_RESULT_OK;
+	case RADIO_PARAM_TXPOWER:
+		paconfig = sx1276_read(REG_PACONFIG);
+		if(paconfig & RF_PACONFIG_PASELECT_PABOOST){
+			*value = 17 - (15 - (paconfig &~ RF_PACONFIG_OUTPUTPOWER_MASK));
+		}
+		else{
+			*value = 15 - (15 - (paconfig &~ RF_PACONFIG_OUTPUTPOWER_MASK)); // Pmax = 15 - See sx1276_set_txconfig
+		}
+		return RADIO_RESULT_OK;
+	case RADIO_PARAM_RSSI:
+		*value = sx1276_read(REG_LR_RSSIVALUE) - 137;
+		return RADIO_RESULT_OK;
+	case RADIO_PARAM_LAST_RSSI:
+		*value = sx1276_read(REG_LR_PKTRSSIVALUE) - 137;
+		//*value = rx_last_rssi;
+		return RADIO_RESULT_OK;
+	case RADIO_CONST_CHANNEL_MIN:
+		*value = 0;
+		return RADIO_RESULT_OK;
+	case RADIO_CONST_CHANNEL_MAX:
+		*value = (uint8_t) ((RF_FREQUENCY_MAX - RF_FREQUENCY_MIN)/(LORA_BANDWIDTH_HZ) - 1);
+		return RADIO_RESULT_OK;
+	case RADIO_CONST_TXPOWER_MIN:
+		if((sx1276_read(REG_PACONFIG) & RF_PACONFIG_PASELECT_PABOOST) == 0){
+			*value = 0x02; // 2 dBm
+		}
+		else{
+			*value = 0x00; // 0 dBm
+		}
+		return RADIO_RESULT_OK;
+	case RADIO_CONST_TXPOWER_MAX:
+		if((sx1276_read(REG_PACONFIG) & RF_PACONFIG_PASELECT_PABOOST) == 0){
+			*value = 0x14; // 20 dBm
+		}
+		else{
+			*value = 0x0E; // 14 dBm
+		}
+		return RADIO_RESULT_OK;
+	default:
+    return RADIO_RESULT_NOT_SUPPORTED;
+	}
+}
+/*---------------------------------------------------------------------------*/
+static radio_result_t
+sx1276_radio_set_value(radio_param_t param, radio_value_t value)
+{
+	uint8_t opmode = 0;
+	switch(param) {
+  case RADIO_PARAM_POWER_MODE:
+		if(value == RADIO_POWER_MODE_ON){
+			sx1276_radio_on();
+			return RADIO_RESULT_OK;
+		}
+		else if(value == RADIO_POWER_MODE_OFF){
+			sx1276_radio_off();
+			return RADIO_RESULT_OK;
+		}
+		return RADIO_RESULT_INVALID_VALUE;
+	case RADIO_PARAM_CHANNEL:
+		/*if(!(((RF_FREQUENCY == RF_FREQUENCY_EU) && (value >= RF_FREQUENCY_EU_MIN && value <= RF_FREQUENCY_EU_MAX)) ||
+			((RF_FREQUENCY == RF_FREQUENCY_US) && (value >= RF_FREQUENCY_US_MIN && value <= RF_FREQUENCY_US_MAX)) ||
+			((RF_FREQUENCY == RF_FREQUENCY_AU) && (value >= RF_FREQUENCY_AU_MIN && value <= RF_FREQUENCY_AU_MAX)))){
+			return RADIO_RESULT_INVALID_VALUE;
+		}*/
+		opmode = sx1276_read(REG_OPMODE);
+		sx1276_set_sleep();
+		sx1276_set_channel(value);
+		sx1276_write(REG_OPMODE, opmode);
+		return RADIO_RESULT_OK;
+	case RADIO_PARAM_PAN_ID:
+		if(value == 0x34){
+			return RADIO_RESULT_INVALID_VALUE;
+		}
+		opmode = sx1276_read(REG_OPMODE);
+		sx1276_set_sleep();
+		sx1276_write(REG_LR_SYNCWORD, (uint8_t) value);
+		sx1276_write(REG_OPMODE, opmode);
+		return RADIO_RESULT_OK;
+	case RADIO_PARAM_16BIT_ADDR:
+		node_id = (uint16_t) value; // No way to change SX1276 Address on Lora mode?
+		return RADIO_RESULT_OK;
+	case RADIO_PARAM_TXPOWER:
+		opmode = sx1276_read(REG_OPMODE);
+		sx1276_set_sleep();
+		sx1276_set_txconfig(MODEM_LORA, value, 0, LORA_BANDWIDTH,
+																		LORA_SPREADING_FACTOR, LORA_CODINGRATE,
+																		LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
+																		true, 0, 0, LORA_IQ_INVERSION_ON, 3000);
+		sx1276_write(REG_OPMODE, opmode);
+		return RADIO_RESULT_OK;
+	default:
+  	return RADIO_RESULT_NOT_SUPPORTED;
+	}
+}
+/*---------------------------------------------------------------------------*/
+static radio_result_t
+sx1276_radio_get_object(radio_param_t param, void *dest, size_t size)
+{
+  return RADIO_RESULT_NOT_SUPPORTED;
+}
+/*---------------------------------------------------------------------------*/
+static radio_result_t
+sx1276_radio_set_object(radio_param_t param, const void *src, size_t size)
+{
+  return RADIO_RESULT_NOT_SUPPORTED;
+}
+/*---------------------------------------------------------------------------*/
 const struct radio_driver sx1276_driver =
 {
   sx1276_radio_init,
@@ -338,10 +502,14 @@ const struct radio_driver sx1276_driver =
   sx1276_radio_transmit,
   sx1276_radio_send,
   sx1276_radio_read,
-  //sx1276_radio_channel_clear,
+  sx1276_radio_channel_clear,
   sx1276_radio_receiving_packet,
   sx1276_radio_pending_packet,
   sx1276_radio_on,
   sx1276_radio_off,
+	sx1276_radio_get_value,
+  sx1276_radio_set_value,
+  sx1276_radio_get_object,
+  sx1276_radio_set_object,
 };
 /*---------------------------------------------------------------------------*/

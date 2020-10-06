@@ -140,6 +140,8 @@ int clock_fine_max(void);
 unsigned short clock_fine(void);
 void clock_delay(unsigned int delay);
 
+void delay_ms(unsigned int ms);
+
 #endif /* CLOCK_H_ */
 
 /** @} */

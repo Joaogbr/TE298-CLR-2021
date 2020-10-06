@@ -20,7 +20,7 @@ typedef struct {
     void (*RxTimeout)(void);
     void (*RxError)(void);
     void (*FhssChangeChannel)(uint8_t currentChannel);
-    void (*CadDone) (int8_t channelActivityDetected);
+    void (*CadDone) (bool channelActivityDetected);
 } RadioEvents_t;
 
 /*---------------------------------------------------------------------------*/
@@ -30,6 +30,7 @@ typedef enum
     RF_RX_RUNNING,
     RF_TX_RUNNING,
     RF_CAD,
+    CAD_DONE
 } radio_state_t;
 
 /*---------------------------------------------------------------------------*/
@@ -158,7 +159,7 @@ extern sx1276_t sx1276;
  * ============================================================================
  */
 
-void sx1276_init(RadioEvents_t *events ); 
+void sx1276_init(RadioEvents_t *events );
 void sx1276_reset();
 void sx1276_rxchain_calibration();
 
@@ -183,6 +184,7 @@ void sx1276_set_modem(radio_modem_t modem);
 void sx1276_set_opmode(uint8_t opmode);
 void sx1276_set_rx(uint32_t timeout);
 void sx1276_set_tx(uint32_t timeout);
+void sx1276_start_cad (void);
 
 void sx1276_send(uint8_t *buffer, uint8_t size);
 void sx1276_set_sleep(void);
@@ -195,6 +197,7 @@ uint8_t sx1276_read(uint8_t addr);
 void sx1276_read_buffer(uint8_t addr, uint8_t* buffer, uint8_t len);
 void sx1276_read_fifo(uint8_t *data, uint8_t len);
 void sx1276_on_dio0irq();
+void sx1276_on_dio3irq();
 void sx1276_disable_sync_word(void);
 /*---------------------------------------------------------------------------*/
 

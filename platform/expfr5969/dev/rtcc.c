@@ -172,10 +172,10 @@ rtcc_set_time_date(simple_td_map *data)
     return RTCC_ERROR;
   }
 
-  rtc_buffer[WEEKDAYLS_ADDR] = dec_to_bcd(data->weekdays);
   rtc_buffer[YEAR_ADDR] = dec_to_bcd(data->years);
   rtc_buffer[MONTHS_ADDR] = dec_to_bcd(data->months);
   rtc_buffer[DAY_ADDR] = dec_to_bcd(data->day);
+  rtc_buffer[WEEKDAYLS_ADDR] = dec_to_bcd(data->weekdays);
   rtc_buffer[HOUR_ADDR] = dec_to_bcd(data->hours);
   rtc_buffer[MIN_ADDR] = dec_to_bcd(data->minutes);
   rtc_buffer[SEC_ADDR] = dec_to_bcd(data->seconds);
@@ -210,10 +210,10 @@ rtcc_get_time_date(simple_td_map *data)
   rtc_buffer[MONTHS_ADDR] = RTCMON;
   rtc_buffer[YEAR_ADDR] = RTCYEAR;
 
-  data->weekdays = bcd_to_dec(rtc_buffer[WEEKDAYLS_ADDR]);
   data->years = bcd_to_dec(rtc_buffer[YEAR_ADDR]);
   data->months = bcd_to_dec(rtc_buffer[MONTHS_ADDR]);
   data->day = bcd_to_dec(rtc_buffer[DAY_ADDR]);
+  data->weekdays = bcd_to_dec(rtc_buffer[WEEKDAYLS_ADDR]);
   data->hours = bcd_to_dec(rtc_buffer[HOUR_ADDR]);
   data->minutes = bcd_to_dec(rtc_buffer[MIN_ADDR]);
   data->seconds = bcd_to_dec(rtc_buffer[SEC_ADDR]);
@@ -242,8 +242,8 @@ rtcc_set_alarm_time_date(simple_td_map *data)
   RTCAHOUR &= RTCA_AE;
   RTCAMIN &= RTCA_AE;
 
-  buf[WEEKDAYS_ALARM_ADDR] = dec_to_bcd(data->weekdays);
   buf[DAY_ALARMS_ADDR] = dec_to_bcd(data->day);
+  buf[WEEKDAYS_ALARM_ADDR] = dec_to_bcd(data->weekdays);
   buf[HOURS_ALARM_ADDR] = dec_to_bcd(data->hours);
   buf[MINUTES_ALARM_ADDR] = dec_to_bcd(data->minutes);
 
@@ -252,8 +252,8 @@ rtcc_set_alarm_time_date(simple_td_map *data)
    * the RTC alarm is enabled.
    */
 
-  RTCADOW = RTCA_AE | (buf[WEEKDAYS_ALARM_ADDR] & 0x7F); /* RTC Day of week alarm */
   RTCADAY = RTCA_AE | (buf[DAY_ALARMS_ADDR] & 0x7F);        /* RTC Day Alarm */
+  RTCADOW = RTCA_AE | (buf[WEEKDAYS_ALARM_ADDR] & 0x7F); /* RTC Day of week alarm */
   RTCAHOUR = RTCA_AE | (buf[HOURS_ALARM_ADDR] & 0x7F);      /* RTC Hour Alarm */
   RTCAMIN = RTCA_AE | (buf[MINUTES_ALARM_ADDR] & 0x7F);     /* RTC Minute Alarm */
 
@@ -274,7 +274,7 @@ rtcc_init_timer(uint8_t RTCTEV_bits)
     case 0x02: break;   // Interrupt every day at midnight (00:00)
     case 0x03: break;   // Interrupt every day at noon (12:00)
     default:
-        PRINTF("RTC: invalid RTCEV value\n");
+        PRINTF("RTC: invalid RTCTEV value\n");
         return RTCC_ERROR;
         break;
   }

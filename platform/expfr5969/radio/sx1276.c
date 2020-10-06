@@ -49,7 +49,7 @@
 #include <stdbool.h>
 
 /*---------------------------------------------------------------------------*/
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -185,6 +185,8 @@ void sx1276_init(RadioEvents_t *events) {
   sx1276_rxchain_calibration();
 
   sx1276_set_opmode(RF_OPMODE_SLEEP);
+  //sx1276.Settings.State = RF_IDLE;
+  //delay_ms(1);
 
   eint(); // __enable_interrupt();
 
@@ -208,7 +210,6 @@ void sx1276_reset() {
   P1OUT |= RESET;
   delay_ms(6); // Wait 6 ms
 }
-
 
 void sx1276_rxchain_calibration() {
     uint8_t regPaConfigInitVal;
@@ -769,6 +770,7 @@ void sx1276_send(uint8_t *buffer, uint8_t size) {
           sx1276_write_fifo( buffer, size );
 
           sx1276_set_opmode(RF_OPMODE_TRANSMITTER);
+          delay_ms(1);
           txTimeout = sx1276.Settings.Ook.TxTimeout;
 
         }
@@ -801,7 +803,6 @@ void sx1276_send(uint8_t *buffer, uint8_t size) {
           {
             sx1276_set_opmode(RF_OPMODE_STANDBY);
             sx1276.Settings.State = RF_IDLE;
-
             delay_ms(1);
 
           }
@@ -936,7 +937,7 @@ void sx1276_set_rx(uint32_t timeout) {
 
           /************************************************/
           // sx1276_on_dio0irq();
-          PRINTF("DIO0 interrupt called\n\r");
+          PRINTF("DIO0 interrupt called\n");
           /************************************************/
 
           if(sx1276.Settings.LoRa.FreqHopOn == true)
@@ -985,6 +986,7 @@ void sx1276_set_rx(uint32_t timeout) {
   if(sx1276.Settings.Modem == MODEM_FSK)
   {
     sx1276_set_opmode(RF_OPMODE_RECEIVER);
+    delay_ms(1);
 
     if(rxContinuous == false)
     {
@@ -1002,11 +1004,15 @@ void sx1276_set_rx(uint32_t timeout) {
     {
       ENABLE_DIO0_IT;
       sx1276_set_opmode(RFLR_OPMODE_RECEIVER);
+      sx1276.Settings.State = RF_RX_RUNNING;
+      delay_ms(1);
     }
     else
     {
       ENABLE_DIO0_IT;
       sx1276_set_opmode(RFLR_OPMODE_RECEIVER_SINGLE);
+      sx1276.Settings.State = RF_RX_RUNNING;
+      delay_ms(1);
     }
   }
 }
@@ -1081,6 +1087,41 @@ void sx1276_set_tx(uint32_t timeout) {
   sx1276.Settings.State = RF_TX_RUNNING;
   //TimerStart( &TxTimeoutTimer );
   sx1276_set_opmode(RF_OPMODE_TRANSMITTER);
+  delay_ms(1);
+}
+
+void sx1276_start_cad( void )
+{
+  switch( sx1276.Settings.Modem )
+  {
+    case MODEM_FSK:
+    case MODEM_OOK:
+        {
+
+        }
+        break;
+    case MODEM_LORA:
+        {
+            sx1276_write( REG_LR_IRQFLAGSMASK, RFLR_IRQFLAGS_RXTIMEOUT |
+                                        RFLR_IRQFLAGS_RXDONE |
+                                        RFLR_IRQFLAGS_PAYLOADCRCERROR |
+                                        RFLR_IRQFLAGS_VALIDHEADER |
+                                        RFLR_IRQFLAGS_TXDONE |
+                                        //RFLR_IRQFLAGS_CADDONE |
+                                        RFLR_IRQFLAGS_FHSSCHANGEDCHANNEL // |
+                                        //RFLR_IRQFLAGS_CADDETECTED
+                                        );
+
+            // DIO3=CADDone
+            sx1276_write( REG_DIOMAPPING1, ( sx1276_read( REG_DIOMAPPING1 ) & RFLR_DIOMAPPING1_DIO3_MASK ) | RFLR_DIOMAPPING1_DIO3_00 );
+
+            sx1276.Settings.State = RF_CAD;
+            sx1276_set_opmode( RFLR_OPMODE_CAD );
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 
@@ -1139,6 +1180,7 @@ void sx1276_write(uint8_t addr, uint8_t data) {
 }
 
 void sx1276_write_buffer(uint8_t addr, uint8_t* data, uint8_t len) {
+  //uint8_t len0 = len;
   if (len > 0)
   {
     spi_chipEnable();
@@ -1147,6 +1189,7 @@ void sx1276_write_buffer(uint8_t addr, uint8_t* data, uint8_t len) {
 
     while (len--)
       {
+        PRINTF("Byte sent: %u\n", *data);
         spi_send(*data++);
       }
 
@@ -1174,6 +1217,7 @@ uint8_t sx1276_read(uint8_t addr) {
 }
 
 void sx1276_read_buffer(uint8_t addr, uint8_t* data, uint8_t len) {
+  //uint8_t len0 = len;
   if (len > 0)
   {
     spi_chipEnable();
@@ -1183,7 +1227,9 @@ void sx1276_read_buffer(uint8_t addr, uint8_t* data, uint8_t len) {
     while (len--)
     {
       spi_transfer(0x00);
-      *data++  = spi_buf;
+      *data  = spi_buf;
+      PRINTF("Byte read: %u\n", *data);
+      data++;
     }
 
     spi_chipDisable();
@@ -1394,6 +1440,38 @@ void sx1276_on_dio0irq() {
   }
 }
 
+void sx1276_on_dio3irq()
+{
+    switch( sx1276.Settings.Modem )
+    {
+    case MODEM_FSK:
+    case MODEM_OOK:
+        break;
+    case MODEM_LORA:
+        if( ( sx1276_read( REG_LR_IRQFLAGS ) & RFLR_IRQFLAGS_CADDETECTED ) == RFLR_IRQFLAGS_CADDETECTED )
+        {
+            // Clear Irq
+            sx1276_write( REG_LR_IRQFLAGS, RFLR_IRQFLAGS_CADDETECTED | RFLR_IRQFLAGS_CADDONE );
+            if( ( RadioEvents != NULL ) && ( RadioEvents->CadDone != NULL ) )
+            {
+                RadioEvents->CadDone( true );
+            }
+        }
+        else
+        {
+            // Clear Irq
+            sx1276_write( REG_LR_IRQFLAGS, RFLR_IRQFLAGS_CADDONE );
+            if( ( RadioEvents != NULL ) && ( RadioEvents->CadDone != NULL ) )
+            {
+                RadioEvents->CadDone( false );
+            }
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 
 #pragma vector=PORT1_VECTOR
 __interrupt void port1_interrupt_handler(void)
@@ -1406,3 +1484,15 @@ __interrupt void port1_interrupt_handler(void)
     // Reset the interrupt flag
     P1IFG &= ~BIT3;
 }
+
+/*#pragma vector=PORTx_VECTOR
+__interrupt void portx_interrupt_handler(void)
+{
+    if (PxIFG & BITx)
+    {
+        sx1276_on_dio3irq();
+
+    }
+    // Reset the interrupt flag
+    PxIFG &= ~BITx;
+}*/

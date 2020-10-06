@@ -43,12 +43,12 @@ const struct sensors_sensor button_sensor;
 static struct timer debouncetimer;
 static int status(int type);
 
-/* Button port for LoRa + WuR platform V3.0 ->P3.1 */
-HWCONF_PINx(BUTTON, 3, 1, 0);
-HWCONF_IRQx(BUTTON, 3, 1);
+/* Button port for FR5969 Launchpad V3.0 -> P4.5 */
+HWCONF_PINx(BUTTON, 4, 5, 0);
+HWCONF_IRQx(BUTTON, 4, 5);
 
 /*---------------------------------------------------------------------------*/
-ISR(PORT3, irq_p3)
+ISR(PORT4, irq_button)
 {
   ENERGEST_ON(ENERGEST_TYPE_IRQ);
   if(BUTTON_CHECK_IRQ()) {
@@ -105,5 +105,3 @@ status(int type)
 }
 /*---------------------------------------------------------------------------*/
 SENSORS_SENSOR(button_sensor, BUTTON_SENSOR, value, configure, status);
-
-

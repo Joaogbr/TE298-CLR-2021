@@ -38,29 +38,29 @@
 #include "dev/leds.h"
 
 /* LED ports for LoRa + WuR platform V3.0 */
-#define LEDS_CONF_RED    BIT3
-#define LEDS_CONF_GREEN  BIT4
+#define LEDS_CONF_RED    BIT6
+#define LEDS_CONF_GREEN  BIT0
 
 /*---------------------------------------------------------------------------*/
 void
 leds_arch_init(void)
 {
   /* only two LEDS are currently available on the platform, configured as RED and GREEN */
-  P3DIR |= LEDS_CONF_RED;
-  P3DIR |= LEDS_CONF_GREEN;
+  P4DIR |= LEDS_CONF_RED;
+  P1DIR |= LEDS_CONF_GREEN;
 }
 /*---------------------------------------------------------------------------*/
 unsigned char
 leds_arch_get(void)
 {
-  return ((P3OUT & LEDS_CONF_RED) ? 0 : LEDS_RED)
-    | ((P3OUT & LEDS_CONF_GREEN) ? 0 : LEDS_GREEN);
+  return ((P4OUT & LEDS_CONF_RED) ? 0 : LEDS_RED)
+    | ((P1OUT & LEDS_CONF_GREEN) ? 0 : LEDS_GREEN);
 }
 /*---------------------------------------------------------------------------*/
 void
 leds_arch_set(unsigned char leds)
 {
-  P3OUT = (P3OUT & ~LEDS_CONF_RED)  | ((leds & LEDS_RED) ? LEDS_CONF_RED : 0);
-  P3OUT = (P3OUT & ~LEDS_CONF_GREEN)|((leds & LEDS_GREEN) ? LEDS_CONF_GREEN : 0);
+  P4OUT = (P4OUT & ~LEDS_CONF_RED)  | ((leds & LEDS_RED) ? LEDS_CONF_RED : 0);
+  P1OUT = (P1OUT & ~LEDS_CONF_GREEN)|((leds & LEDS_GREEN) ? LEDS_CONF_GREEN : 0);
 }
 /*---------------------------------------------------------------------------*/

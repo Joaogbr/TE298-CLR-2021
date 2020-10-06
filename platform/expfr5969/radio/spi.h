@@ -14,15 +14,17 @@ extern volatile uint8_t spi_buf;
 
 #define CS          BIT0
 #define RESET       BIT4
-#define SCLK        BIT5
-#define MOSI        BIT0
-#define MISO        BIT1
+#define SCLK        BIT2
+#define MOSI        BIT6
+#define MISO        BIT7
 #define DIO_0       BIT3
 
 /*
  * Initialize the hardware
  */
 void spi_init(void);
+void spi_enable(void);
+void spi_disable(void);
 void spi_txready();
 void spi_rxready();
 void spi_send(uint8_t data);

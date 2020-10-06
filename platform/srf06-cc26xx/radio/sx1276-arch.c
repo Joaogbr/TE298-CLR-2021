@@ -182,7 +182,7 @@ PROCESS_THREAD(sx1276_process, ev, data)
 static int
 sx1276_radio_init(void)
 {
-  printf("Initializing sx1276\n");
+  printf("Initializing SX1276\n");
 
 	spi_reset_config(RESET);
   spi_cs_config(CS);
@@ -210,20 +210,23 @@ sx1276_radio_init(void)
                                   LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
                                   0, true, 0, 0, LORA_IQ_INVERSION_ON, true);
 
-	if((RF_FREQUENCY == RF_FREQUENCY_868) || (RF_FREQUENCY == RF_FREQUENCY_915)){ // HF above 779 MHz (datasheet)
+	/*if((RF_FREQUENCY >= 860000000){ // HF above 860 MHz (datasheet)
 		sx1276_write(REG_OPMODE, sx1276_read(REG_OPMODE) &~ RFLR_OPMODE_FREQMODE_ACCESS_LF);
 	}
-	else{
-		sx1276_write(REG_OPMODE, sx1276_read(REG_OPMODE) | RFLR_OPMODE_FREQMODE_ACCESS_LF); // HF below 525 MHz (datasheet)
+	else if(RF_FREQUENCY <= 525000000){
+		sx1276_write(REG_OPMODE, sx1276_read(REG_OPMODE) | RFLR_OPMODE_FREQMODE_ACCESS_LF); // LF below 525 MHz (datasheet)
 	}
+	else{
+		printf("Warning! Radio Frequency between 525 and 860 MHz is undefined\n");
+	}*/
 
   sx1276_sf       = LORA_SPREADING_FACTOR;
   sx1276_bw       = LORA_BANDWIDTH;
   sx1276_cr       = LORA_CODINGRATE;
   sx1276_tx_power = TX_OUTPUT_POWER;
 
-  printf("SX1276 initialized with Freq:%uHz, TX Pwr: %ddBm, BW:%d, SF:%d, CR:%d\n",
-          RF_FREQUENCY, TX_OUTPUT_POWER, LORA_BANDWIDTH,
+  printf("SX1276 initialized with Freq: %u Hz, TX Pwr: %d dBm, BW: %d Hz, SF: %d, CR: %d\n",
+          RF_FREQUENCY, TX_OUTPUT_POWER, LORA_BANDWIDTH_HZ,
           LORA_SPREADING_FACTOR, LORA_CODINGRATE);
 
 	pending_packets = 0;
@@ -370,6 +373,7 @@ static radio_result_t
 sx1276_radio_get_value(radio_param_t param, radio_value_t *value)
 {
 	uint8_t paconfig;
+	uint32_t Freq;
 	switch(param) {
   case RADIO_PARAM_POWER_MODE:
 		if((sx1276_read(REG_OPMODE) & RFLR_OPMODE_CAD) == RF_OPMODE_SLEEP || RF_OPMODE_STANDBY){
@@ -380,7 +384,10 @@ sx1276_radio_get_value(radio_param_t param, radio_value_t *value)
 		}
 		return RADIO_RESULT_OK;
 	case RADIO_PARAM_CHANNEL:
-		*value = RF_FREQUENCY;
+	Freq = (double)(   ((uint32_t) sx1276_read(REG_FRFMSB) << 16) |
+														((uint32_t) sx1276_read(REG_FRFMID) << 8 ) |
+														((uint32_t) sx1276_read(REG_FRFLSB))) * (double) FREQ_STEP;
+		*value = (Freq - RF_FREQUENCY_MIN)/LORA_BANDWIDTH_HZ;
 		return RADIO_RESULT_OK;
 	case RADIO_PARAM_PAN_ID:
 		*value = sx1276_read(REG_LR_SYNCWORD);
@@ -404,32 +411,18 @@ sx1276_radio_get_value(radio_param_t param, radio_value_t *value)
 		*value = sx1276_read(REG_LR_PKTRSSIVALUE) - 137;
 		return RADIO_RESULT_OK;
 	case RADIO_CONST_CHANNEL_MIN:
-		if(RF_FREQUENCY == RF_FREQUENCY_868){
-			*value = RF_FREQUENCY_868_MIN;
-			return RADIO_RESULT_OK;
-		}
-		else if(RF_FREQUENCY == RF_FREQUENCY_915){
-			*value = RF_FREQUENCY_915_MIN;
-			return RADIO_RESULT_OK;
-		}
-		return RADIO_RESULT_ERROR;
+		*value = 0;
+		return RADIO_RESULT_OK;
 	case RADIO_CONST_CHANNEL_MAX:
-		if(RF_FREQUENCY == RF_FREQUENCY_868){
-			*value = RF_FREQUENCY_868_MAX;
-			return RADIO_RESULT_OK;
-		}
-		else if(RF_FREQUENCY == RF_FREQUENCY_915){
-			*value = RF_FREQUENCY_915_MAX;
-			return RADIO_RESULT_OK;
-		}
-		return RADIO_RESULT_ERROR;
+		*value = (uint8_t) ((RF_FREQUENCY_MAX - RF_FREQUENCY_MIN)/(LORA_BANDWIDTH_HZ) - 1);
+		return RADIO_RESULT_OK;
 	case RADIO_CONST_TXPOWER_MIN:
-	if((sx1276_read(REG_PACONFIG) & RF_PACONFIG_PASELECT_PABOOST) == 0){
-		*value = 0x02; // 2 dBm
-	}
-	else{
-		*value = 0x00; // 0 dBm
-	}
+		if((sx1276_read(REG_PACONFIG) & RF_PACONFIG_PASELECT_PABOOST) == 0){
+			*value = 0x02; // 2 dBm
+		}
+		else{
+			*value = 0x00; // 0 dBm
+		}
 		return RADIO_RESULT_OK;
 	case RADIO_CONST_TXPOWER_MAX:
 		if((sx1276_read(REG_PACONFIG) & RF_PACONFIG_PASELECT_PABOOST) == 0){
@@ -460,10 +453,11 @@ sx1276_radio_set_value(radio_param_t param, radio_value_t value)
 		}
 		return RADIO_RESULT_INVALID_VALUE;
 	case RADIO_PARAM_CHANNEL:
-		if(!(((RF_FREQUENCY == RF_FREQUENCY_868) && (value >= RF_FREQUENCY_868_MIN && value <= RF_FREQUENCY_868_MAX)) ||
-			((RF_FREQUENCY == RF_FREQUENCY_915) && (value >= RF_FREQUENCY_915_MIN && value <= RF_FREQUENCY_915_MAX)))){
+		/*if(!(((RF_FREQUENCY == RF_FREQUENCY_EU) && (value >= RF_FREQUENCY_EU_MIN && value <= RF_FREQUENCY_EU_MAX)) ||
+			((RF_FREQUENCY == RF_FREQUENCY_US) && (value >= RF_FREQUENCY_US_MIN && value <= RF_FREQUENCY_US_MAX)) ||
+			((RF_FREQUENCY == RF_FREQUENCY_AU) && (value >= RF_FREQUENCY_AU_MIN && value <= RF_FREQUENCY_AU_MAX)))){
 			return RADIO_RESULT_INVALID_VALUE;
-		}
+		}*/
 		opmode = sx1276_read(REG_OPMODE);
 		sx1276_set_sleep();
 		sx1276_set_channel(value);

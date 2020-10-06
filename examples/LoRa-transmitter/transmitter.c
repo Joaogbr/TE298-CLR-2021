@@ -43,7 +43,7 @@
 #include "sx1276-arch.h"
 #include "spi.h"
 /*---------------------------------------------------------------------------*/
-#define LEDS_DEBUG 0
+#define LEDS_DEBUG 1
 #if LEDS_DEBUG
 #define LEDS_ON(x) leds_on(x)
 #define LEDS_OFF(x) leds_off(x)
@@ -88,7 +88,7 @@ AUTOSTART_PROCESSES(&rx_process);
 PROCESS_THREAD(rx_process, ev, data)
 {
   PROCESS_BEGIN();
-  puts("Process has begun");
+  printf("Process has begun\n");
 
 	//sx1276_driver.init();
 	// Start infinite RX
@@ -102,7 +102,7 @@ PROCESS_THREAD(rx_process, ev, data)
     if(ev == PROCESS_EVENT_TIMER) {
     	leds_on(LEDS_ALL);
     	SendPing();
-    	puts("Sent the PING");
+    	PRINTF("Sent the PING\n");
     	leds_off(LEDS_ALL);
 
 		etimer_reset(&rx_timer);

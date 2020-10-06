@@ -42,7 +42,7 @@
 #include "sx1276-arch.h"
 #include "spi.h"
 /*---------------------------------------------------------------------------*/
-#define LEDS_DEBUG 0
+#define LEDS_DEBUG 1
 #if LEDS_DEBUG
 #define LEDS_ON(x) leds_on(x)
 #define LEDS_OFF(x) leds_off(x)
@@ -53,7 +53,7 @@
 #define LEDS_TOGGLE(x)
 #endif
 /*---------------------------------------------------------------------------*/
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -74,7 +74,7 @@ AUTOSTART_PROCESSES(&rx_process);
 PROCESS_THREAD(rx_process, ev, data)
 {
   PROCESS_BEGIN();
-  puts("Process begin");
+  printf("Process has begun\n");
 
   //sx1276_driver.init();
   //sx1276_driver.on();
@@ -89,8 +89,8 @@ PROCESS_THREAD(rx_process, ev, data)
       sx1276_set_rx(0);
 
       //size = sx1276_driver.read(rx_msg, sizeof(rx_msg));
-      //printf("RXD MSG size: %d\n\r", size);
-      puts("Waiting for packet");
+      //PRINTF("RXD MSG size: %d\n\r", size);
+      PRINTF("Waiting for packet\n");
 
       etimer_reset(&rx_timer);
     }

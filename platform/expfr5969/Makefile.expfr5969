@@ -8,11 +8,11 @@ CLEAN += symbols.c symbols.h *.elf *.expfr5969 *.hex Log
 
 CONTIKI_TARGET_SOURCEFILES += contiki-expfr5969-platform.c \
 	button-sensor.c \
-	wur-sensor.c
+	# wur-sensor.c
 
 ARCH=node-id.c rtcc.c leds.c \
 	 leds-arch.c \
-	 uart1.c slip_uart1.c uart1-putchar.c \
+	 uart0.c slip_uart0.c uart0-putchar.c \
 	 sx1276-arch.c sx1276.c spi.c
 
 
@@ -74,11 +74,29 @@ contiki-$(TARGET).a: ${addprefix $(OBJECTDIR)/,symbols.o}
 
 %.upload: %.hex
 	@echo "Programming EXPFR5969 with $< using MSP-FET Flash Emulation tool"
-	/home/joao/ti/MSPFlasher_1.3.20/MSP430Flasher -n msp430fr5969 -e ERASE_MAIN -w $< -v -z [VCC]
+	~/ti/MSPFlasher_1.3.20/MSP430Flasher -n msp430fr5969 -e ERASE_MAIN -w $< -v -z [VCC]
 
 %.upload-clean: %.hex
 	@echo "Programming EXPFR5969 with $< using MSP-FET"
 	msp430flasher -n msp430fr5969 -w $< -v -z [VCC]
+
+# Check if we are running under Windows
+ifeq ($(HOST_OS),Windows)
+  SERIALDUMP ?= $(CONTIKI)/tools/sky/serialdump-windows
+else
+ifeq ($(HOST_OS),Darwin)
+  SERIALDUMP ?= $(CONTIKI)/tools/sky/serialdump-macos
+else
+  # Else assume Linux
+  SERIALDUMP ?= $(CONTIKI)/tools/sky/serialdump-linux
+endif
+endif
+
+UART_BAUDRATE = 115200
+
+login:
+	$(SERIALDUMP) -b$(UART_BAUDRATE) $(PORT)
+
 
 MODULES += core/net \
 		   core/net/mac \

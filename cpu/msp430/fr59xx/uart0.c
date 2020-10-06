@@ -32,7 +32,7 @@
  */
 
 /*
- * \Contiki port, author 
+ * \Contiki port, author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  * \Adopted from:
  *         Andrea Gaglione <and.gaglione@gmail.com>
@@ -89,12 +89,31 @@ uart0_init(unsigned long ubr)
 {
   /* RS232 */
   UCA0CTL1 |= UCSWRST;            /* Hold peripheral in reset state */
-  UCA0CTL1 |= UCSSEL_2;           /* CLK = SMCLK */
+  UCA0CTL1 |= UCSSEL__SMCLK;           /* CLK = SMCLK */
 
+  #if F_CPU == 8000000uL
+    // Baud Rate calculation
+    UCA0BR0 = 0x45;                 /* 8MHz/115200 = 69 = 0x45 */
+    UCA0BR1 = 0x00;
+    UCA0MCTLW = 0x5500;             /* Modulation: 8000000/115200 - INT(8000000/115200)=0.44*/
+
+  #elif F_CPU == 1000000uL
+    UCA0BR0 = 6;                    /* 1MHz/9600*/
+    UCA0BR1 = 0;
+    UCA0MCTLW |= UCOS16 + UCBRF_8;
+
+  #else
+
+  #error Unsupported CPU speed in uart0.c
+
+  #endif
+
+  #if 0
   ubr = (MSP430_CPU_SPEED / ubr);
   UCA0BR0 = ubr & 0xff;
   UCA0BR1 = (ubr >> 8) & 0xff;
   UCA0MCTLW = UCBRS3;             /* Modulation UCBRSx = 3 */
+  #endif
 
 
   P2DIR &= ~BIT1;                   /* P2.1 = USCI_A0 RXD as input */

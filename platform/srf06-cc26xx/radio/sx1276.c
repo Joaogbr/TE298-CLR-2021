@@ -211,6 +211,8 @@ void sx1276_init(RadioEvents_t *events) {
 
   //eint(); // __enable_interrupt();
 
+  // sx1276_write(REG_OPMODE, sx1276_read(REG_OPMODE) &~ RFLR_OPMODE_FREQMODE_ACCESS_LF);
+
   uint8_t i;
 
   for(i = 0; i < sizeof(radio_registers) / sizeof(radio_registers_t); i++)
@@ -809,6 +811,7 @@ void sx1276_send(uint8_t *buffer, uint8_t size) {
             sx1276_write(REG_LR_INVERTIQ, ((sx1276_read(REG_LR_INVERTIQ) & RFLR_INVERTIQ_TX_MASK & RFLR_INVERTIQ_RX_MASK) | RFLR_INVERTIQ_RX_OFF | RFLR_INVERTIQ_TX_OFF));
             sx1276_write(REG_LR_INVERTIQ2, RFLR_INVERTIQ2_OFF );
           }
+
           sx1276.Settings.LoRaPacketHandler.Size = size;
 
           // Initializes the payload size
@@ -840,7 +843,7 @@ void sx1276_set_sleep(void)
 {
     // TimerStop( &RxTimeoutTimer );
     // TimerStop( &TxTimeoutTimer );
-  printf("Sx1276 entering sleep mode\n");
+  printf("SX1276 entering sleep mode\n");
   disable_dio0_it(DIO_0);
   sx1276_set_opmode(RF_OPMODE_SLEEP);
   sx1276.Settings.State = RF_IDLE;
@@ -1109,7 +1112,6 @@ void sx1276_set_tx(uint32_t timeout) {
   sx1276_set_opmode(RF_OPMODE_TRANSMITTER);
   clock_delay_usec(1000);
 }
-
 
 void sx1276_set_channel(uint32_t freq) {
     sx1276.Settings.Channel = freq;

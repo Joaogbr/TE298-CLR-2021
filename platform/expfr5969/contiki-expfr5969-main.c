@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * \Contiki port, author 
+ * \Contiki port, author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  */
 
@@ -39,7 +39,7 @@
 #include "dev/leds.h"
 #include "dev/serial-line.h"
 #include "dev/slip.h"
-#include "dev/uart1.h"
+#include "dev/uart0.h"
 #include "dev/watchdog.h"
 #include "lib/random.h"
 #include "net/netstack.h"
@@ -211,7 +211,7 @@ main(int argc, char **argv)
   process_init();
 
 #if WITH_SERIAL_COMM
-  uart1_init(115200); /* Must come before first printf */
+  uart0_init(115200); /* Must come before first printf */
 #endif
 
 //#if NETSTACK_CONF_WITH_IPV4
@@ -227,7 +227,7 @@ main(int argc, char **argv)
   rtimer_init();
 
 #if WITH_SERIAL_COMM
-  uart1_set_input(serial_line_input_byte);
+  uart0_set_input(serial_line_input_byte);
   serial_line_init();
 #endif
 
@@ -298,6 +298,8 @@ main(int argc, char **argv)
 
   init_platform();
 
+  // printf("Starting " CONTIKI_VERSION_STRING "\n");
+
   set_rime_addr();
   random_init(linkaddr_node_addr.u8[LINKADDR_SIZE-2] + linkaddr_node_addr.u8[LINKADDR_SIZE-1]);
 
@@ -324,10 +326,12 @@ main(int argc, char **argv)
 #if NETSTACK_CONF_WITH_IPV6
 
   queuebuf_init();
-  NETSTACK_RDC.init();
-  NETSTACK_MAC.init();
-  NETSTACK_LLSEC.init();
-  NETSTACK_NETWORK.init();
+
+  netstack_init();
+  //NETSTACK_RDC.init();
+  //NETSTACK_MAC.init();
+  //NETSTACK_LLSEC.init();
+  //NETSTACK_NETWORK.init();
 
   PRINTF("%s %s %s\n",
          NETSTACK_LLSEC.name, NETSTACK_MAC.name, NETSTACK_RDC.name);
@@ -365,12 +369,14 @@ main(int argc, char **argv)
 #else /* NETSTACK_CONF_WITH_IPV6 */
 
   queuebuf_init();
-  NETSTACK_RDC.init();
-  NETSTACK_MAC.init();
-  NETSTACK_LLSEC.init();
-  NETSTACK_NETWORK.init();
 
-  PRINTF("MAC Driver: %s RDC Driver: %s \n",
+  netstack_init();
+  //NETSTACK_RDC.init();
+  //NETSTACK_MAC.init();
+  //NETSTACK_LLSEC.init();
+  //NETSTACK_NETWORK.init();
+
+  PRINTF("MAC Driver: %s | RDC Driver: %s \n",
         NETSTACK_MAC.name, NETSTACK_RDC.name);
 
 #endif /* NETSTACK_CONF_WITH_IPV6 */
@@ -421,16 +427,16 @@ main(int argc, char **argv)
       ENERGEST_SWITCH(ENERGEST_TYPE_CPU, ENERGEST_TYPE_LPM);
       /* We only want to measure the processing done in IRQs when we
          are asleep, so we discard the processing time done when we
-         were awake. 
+         were awake.
       */
       energest_type_set(ENERGEST_TYPE_IRQ, irq_energest);
       watchdog_stop();
-      _BIS_SR(GIE | SCG0 | SCG1 | CPUOFF | OSCOFF); 
+      _BIS_SR(GIE | SCG0 | SCG1 | CPUOFF | OSCOFF);
       /* LPM4 sleep. This statement will block until the CPU is
-         woken up by an interrupt that sets the wake up flag. 
+         woken up by an interrupt that sets the wake up flag.
       */
       /* We get the current processing time for interrupts that was
-         done during the LPM and store it for next time around. 
+         done during the LPM and store it for next time around.
       */
       dint();
       irq_energest = energest_type_time(ENERGEST_TYPE_IRQ);
