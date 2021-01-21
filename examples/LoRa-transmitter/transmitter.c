@@ -54,7 +54,7 @@
 #define LEDS_TOGGLE(x)
 #endif
 /*---------------------------------------------------------------------------*/
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -88,7 +88,7 @@ AUTOSTART_PROCESSES(&rx_process);
 PROCESS_THREAD(rx_process, ev, data)
 {
   PROCESS_BEGIN();
-  printf("Process has begun\n");
+  PRINTF("Process has begun\n");
 
 	//sx1276_driver.init();
 	// Start infinite RX

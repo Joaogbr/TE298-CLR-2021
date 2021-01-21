@@ -74,7 +74,7 @@ AUTOSTART_PROCESSES(&rx_process);
 PROCESS_THREAD(rx_process, ev, data)
 {
   PROCESS_BEGIN();
-  printf("Process has begun\n");
+  PRINTF("Process has begun\n");
 
   //sx1276_driver.init();
   //sx1276_driver.on();

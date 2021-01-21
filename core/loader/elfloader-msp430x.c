@@ -371,11 +371,11 @@ elfloader_load(int fd)
   unsigned short shdrnum, shdrsize;
 
   unsigned char using_relas = -1;
-  unsigned short textoff = 0, textfaroff = 0, textsize, textfarsize,
-                 textrelaoff = 0, textrelasize, textfarrelaoff = 0, textfarrelasize;
+  unsigned short textoff = 0, textfaroff = 0, /*textsize,*/ textfarsize,
+                 /*textrelaoff = 0,*/ textrelasize, textfarrelaoff = 0, textfarrelasize;
   unsigned short dataoff = 0, datasize, datarelaoff = 0, datarelasize;
   unsigned short rodataoff = 0, rodatafaroff = 0, rodatasize, rodatafarsize,
-                 rodatarelaoff = 0, rodatarelasize, rodatafarrelaoff = 0,
+                 /*rodatarelaoff = 0,*/ rodatarelasize, rodatafarrelaoff = 0,
                  rodatafarrelasize;
   unsigned short symtaboff = 0, symtabsize;
   unsigned short strtaboff = 0, strtabsize;
@@ -443,7 +443,7 @@ elfloader_load(int fd)
    * Initialize the segment sizes to zero so that we can check if
    * their sections was found in the file or not.
    */
-  textsize = textfarsize = textrelasize = textfarrelasize =
+  /*textsize =*/ textfarsize = textrelasize = textfarrelasize =
           datasize = datarelasize = rodatasize = rodatafarsize =
                   rodatarelasize = rodatafarrelasize = symtabsize = strtabsize = 0;
 
@@ -477,7 +477,7 @@ elfloader_load(int fd)
       strtabsize = shdr.sh_size;
     } else if(strncmp(name, ".text", 5) == 0) {
       textoff = shdr.sh_offset;
-      textsize = shdr.sh_size;
+      //textsize = shdr.sh_size;
       text.number = i;
       text.offset = textoff;
     } else if(strncmp(name, ".far.text", 9) == 0) {
@@ -487,11 +487,11 @@ elfloader_load(int fd)
       textfar.offset = textfaroff;
     } else if(strncmp(name, ".rel.text", 9) == 0) {
       using_relas = 0;
-      textrelaoff = shdr.sh_offset;
+      //textrelaoff = shdr.sh_offset;
       textrelasize = shdr.sh_size;
     } else if(strncmp(name, ".rela.text", 10) == 0) {
       using_relas = 1;
-      textrelaoff = shdr.sh_offset;
+      //textrelaoff = shdr.sh_offset;
       textrelasize = shdr.sh_size;
     } else if(strncmp(name, ".rela.far.text", 14) == 0) {
       using_relas = 1;
@@ -516,11 +516,11 @@ elfloader_load(int fd)
     } else if(strncmp(name, ".rel.rodata", 11) == 0) {
       /* using elf32_rel instead of rela */
       using_relas = 0;
-      rodatarelaoff = shdr.sh_offset;
+      //rodatarelaoff = shdr.sh_offset;
       rodatarelasize = shdr.sh_size;
     } else if(strncmp(name, ".rela.rodata", 12) == 0) {
       using_relas = 1;
-      rodatarelaoff = shdr.sh_offset;
+      //rodatarelaoff = shdr.sh_offset;
       rodatarelasize = shdr.sh_size;
     } else if(strncmp(name, ".rela.far.rodata", 16) == 0) {
       using_relas = 1;
@@ -731,7 +731,7 @@ elfloader_arch_relocate(int fd, unsigned int sectionoffset,
     /* src(15:0) located just after opcode */
     cfs_seek(fd, sectionoffset + rela->r_offset, CFS_SEEK_SET);
     cfs_read(fd, instr, 2);
-    instr[1] = (int)(instr[1]) & 0xf0 | (((long int)addr >> 8) & 0x0f00);
+    instr[1] = ((int)(instr[1]) & 0xf0) | (((long int)addr >> 8) & 0x0f00);
     instr[0] = (int)(instr[0]) & 0xff;
     cfs_seek(fd, sectionoffset + rela->r_offset, CFS_SEEK_SET);
     cfs_write(fd, instr, 2);
@@ -745,7 +745,7 @@ elfloader_arch_relocate(int fd, unsigned int sectionoffset,
     cfs_seek(fd, sectionoffset + rela->r_offset, CFS_SEEK_SET);
     cfs_read(fd, instr, 2);
     instr[1] = (int)(instr[1]) & 0xff;
-    instr[0] = (int)(instr[0]) & 0xf0 | (((long int)addr >> 16) & 0x000f);
+    instr[0] = ((int)(instr[0]) & 0xf0) | (((long int)addr >> 16) & 0x000f);
     cfs_seek(fd, sectionoffset + rela->r_offset, CFS_SEEK_SET);
     cfs_write(fd, instr, 2);
     cfs_write(fd, (char *)&addr, 2);
@@ -759,8 +759,8 @@ elfloader_arch_relocate(int fd, unsigned int sectionoffset,
     cfs_seek(fd, sectionoffset + rela->r_offset, CFS_SEEK_SET);
     cfs_read(fd, instr, 2);
     /* 4 most-significant bits */
-    instr[1] = (int)(instr[1]) & 0xf8 | (((long int)addr >> 9) & 0x0780);
-    instr[0] = (int)(instr[0]) & 0x7f | (((long int)addr >> 9) & 0x0780);
+    instr[1] = ((int)(instr[1]) & 0xf8) | (((long int)addr >> 9) & 0x0780);
+    instr[0] = ((int)(instr[0]) & 0x7f) | (((long int)addr >> 9) & 0x0780);
     cfs_seek(fd, sectionoffset + rela->r_offset, CFS_SEEK_SET);
     cfs_write(fd, instr, 2);
     /* 16 least-significant bits */
@@ -776,7 +776,7 @@ elfloader_arch_relocate(int fd, unsigned int sectionoffset,
     cfs_seek(fd, sectionoffset + rela->r_offset, CFS_SEEK_SET);
     cfs_read(fd, instr, 2);
     instr[1] = (int)(instr[1]) & 0xff;
-    instr[0] = (int)(instr[0]) & 0xf0 | (((long int)addr >> 16) & 0x000f);
+    instr[0] = ((int)(instr[0]) & 0xf0) | (((long int)addr >> 16) & 0x000f);
     cfs_seek(fd, sectionoffset + rela->r_offset, CFS_SEEK_SET);
     cfs_write(fd, instr, 2);
     cfs_seek(fd, sectionoffset + rela->r_offset + 0x04, CFS_SEEK_SET);
@@ -791,7 +791,7 @@ elfloader_arch_relocate(int fd, unsigned int sectionoffset,
     cfs_seek(fd, sectionoffset + rela->r_offset, CFS_SEEK_SET);
     cfs_read(fd, instr, 2);
     instr[1] = (int)(instr[1]) & 0xff;
-    instr[0] = (int)(instr[0]) & 0xf0 | (((long int)addr >> 16) & 0x000f);
+    instr[0] = ((int)(instr[0]) & 0xf0) | (((long int)addr >> 16) & 0x000f);
     cfs_seek(fd, sectionoffset + rela->r_offset, CFS_SEEK_SET);
     cfs_write(fd, instr, 2);
     cfs_seek(fd, sectionoffset + rela->r_offset + 0x06, CFS_SEEK_SET);

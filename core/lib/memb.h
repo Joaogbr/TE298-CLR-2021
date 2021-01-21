@@ -60,6 +60,11 @@
  *
  */
 
+/*
+ * Revision:   David Rodenas-Herraiz <dr424@cam.ac.uk>
+ *
+ */
+
 #ifndef MEMB_H_
 #define MEMB_H_
 
@@ -93,6 +98,35 @@ MEMB(connections, struct connection, 16);
                                           CC_CONCAT(name,_memb_count), \
                                           (void *)CC_CONCAT(name,_memb_mem)}
 
+/**
+ * Declare a memory block in FRAM.
+ *
+ * This macro is used to statically declare a block of memory that can
+ * be used by the block allocation functions. The macro statically
+ * declares a C array with a size that matches the specified number of
+ * blocks and their individual sizes.
+ *
+ * Example:
+ \code
+MEMBF(connections, struct connection, 16, 0xED00);
+ \endcode
+ *
+ * \param name The name of the memory block (later used with
+ * memb_init(), memb_alloc() and memb_free()).
+ *
+ * \param structure The name of the struct that the memory block holds
+ *
+ * \param num The total number of memory chunks in the block.
+ *
+ * \param addr The address of the memory block
+ *
+ */
+#define MEMB_FRAM(name, structure, num, addr) \
+        static char CC_CONCAT(name,_membf_count)[num]; \
+        static struct memb name = {sizeof(structure), num, \
+                                          CC_CONCAT(name,_membf_count), \
+                                          (void *)addr}
+
 struct memb {
   unsigned short size;
   unsigned short num;
@@ -106,6 +140,13 @@ struct memb {
  * \param m A memory block previously declared with MEMB().
  */
 void  memb_init(struct memb *m);
+
+/**
+ * Initialize a memory block that was declared with MEMBF().
+ *
+ * \param m A memory block previously declared with MEMBF().
+ */
+void  memb_fram_init(struct memb *m, void *membf_mem);
 
 /**
  * Allocate a memory block from a block of memory declared with MEMB().

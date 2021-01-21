@@ -78,8 +78,16 @@ struct queuebuf_data {
   struct packetbuf_addr addrs[PACKETBUF_NUM_ADDRS];
 };
 
+#if QUEUEBUF_CONF_FRAM
+MEMB_FRAM(bufmem, struct queuebuf, QUEUEBUF_NUM, QUEUEBUF_CONF_FRAM_ADDR);
+MEMB_FRAM(buframmem, struct queuebuf_data, QUEUEBUFRAM_NUM, (QUEUEBUF_CONF_FRAM_ADDR + QUEUEBUF_NUM * sizeof(struct queuebuf)));
+#else
 MEMB(bufmem, struct queuebuf, QUEUEBUF_NUM);
 MEMB(buframmem, struct queuebuf_data, QUEUEBUFRAM_NUM);
+#endif
+
+//MEMB(bufmem, struct queuebuf, QUEUEBUF_NUM);
+//MEMB(buframmem, struct queuebuf_data, QUEUEBUFRAM_NUM);
 
 #if WITH_SWAP
 
@@ -288,6 +296,17 @@ queuebuf_init(void)
 #endif
   memb_init(&buframmem);
   memb_init(&bufmem);
+
+#if QUEUEBUF_DEBUG
+  void *pt;
+
+  printf("QUEUEBUF_CONF_FRAM_ADDR 0x%x\n", QUEUEBUF_CONF_FRAM_ADDR);
+  pt = (void * )(bufmem.mem + bufmem.size * bufmem.num);
+  printf("bufmem %p (%u bytes x %u = %u bytes --> %p)\n", bufmem.mem, bufmem.size, bufmem.num, bufmem.size * bufmem.num, pt);
+  pt = (void * )(buframmem.mem + buframmem.size * buframmem.num);
+  printf("buframmem %p (%u bytes x %u = %u bytes --> %p)\n", buframmem.mem, buframmem.size, buframmem.num, buframmem.size * buframmem.num, pt);
+#endif
+
 #if QUEUEBUF_STATS
   queuebuf_max_len = 0;
 #endif /* QUEUEBUF_STATS */

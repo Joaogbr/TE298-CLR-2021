@@ -53,7 +53,7 @@ Description: Contiki radio interface implementation for SX1276 Driver
 #include <stdio.h>
 #include "sys/clock.h"
 /*---------------------------------------------------------------------------*/
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -362,11 +362,11 @@ sx1276_radio_pending_packet(void)
   return pending_packets;
 }
 /*---------------------------------------------------------------------------*/
-static radio_result_t
+/*static radio_result_t
 sx1276_radio_get_value(radio_param_t param, radio_value_t *value)
 {
-	uint8_t paconfig;
-	uint32_t Freq;
+	uint8_t paconfig = 0;
+	uint32_t Freq = 0;
 	switch(param) {
   case RADIO_PARAM_POWER_MODE:
 		if((sx1276_read(REG_OPMODE) & RFLR_OPMODE_CAD) == RF_OPMODE_SLEEP || RF_OPMODE_STANDBY){
@@ -402,7 +402,7 @@ sx1276_radio_get_value(radio_param_t param, radio_value_t *value)
 		return RADIO_RESULT_OK;
 	case RADIO_PARAM_LAST_RSSI:
 		*value = sx1276_read(REG_LR_PKTRSSIVALUE) - 137;
-		//*value = rx_last_rssi;
+		// *value = rx_last_rssi;
 		return RADIO_RESULT_OK;
 	case RADIO_CONST_CHANNEL_MIN:
 		*value = 0;
@@ -429,12 +429,12 @@ sx1276_radio_get_value(radio_param_t param, radio_value_t *value)
 	default:
     return RADIO_RESULT_NOT_SUPPORTED;
 	}
-}
+}*/
 /*---------------------------------------------------------------------------*/
-static radio_result_t
+/*static radio_result_t
 sx1276_radio_set_value(radio_param_t param, radio_value_t value)
 {
-	uint8_t opmode = 0;
+	//uint8_t opmode = 0;
 	switch(param) {
   case RADIO_PARAM_POWER_MODE:
 		if(value == RADIO_POWER_MODE_ON){
@@ -447,53 +447,48 @@ sx1276_radio_set_value(radio_param_t param, radio_value_t value)
 		}
 		return RADIO_RESULT_INVALID_VALUE;
 	case RADIO_PARAM_CHANNEL:
-		/*if(!(((RF_FREQUENCY == RF_FREQUENCY_EU) && (value >= RF_FREQUENCY_EU_MIN && value <= RF_FREQUENCY_EU_MAX)) ||
-			((RF_FREQUENCY == RF_FREQUENCY_US) && (value >= RF_FREQUENCY_US_MIN && value <= RF_FREQUENCY_US_MAX)) ||
-			((RF_FREQUENCY == RF_FREQUENCY_AU) && (value >= RF_FREQUENCY_AU_MIN && value <= RF_FREQUENCY_AU_MAX)))){
-			return RADIO_RESULT_INVALID_VALUE;
-		}*/
-		opmode = sx1276_read(REG_OPMODE);
+		//opmode = sx1276_read(REG_OPMODE);
 		sx1276_set_sleep();
 		sx1276_set_channel(value);
-		sx1276_write(REG_OPMODE, opmode);
+		//sx1276_write(REG_OPMODE, opmode);
 		return RADIO_RESULT_OK;
 	case RADIO_PARAM_PAN_ID:
 		if(value == 0x34){
 			return RADIO_RESULT_INVALID_VALUE;
 		}
-		opmode = sx1276_read(REG_OPMODE);
+		//opmode = sx1276_read(REG_OPMODE);
 		sx1276_set_sleep();
 		sx1276_write(REG_LR_SYNCWORD, (uint8_t) value);
-		sx1276_write(REG_OPMODE, opmode);
+		//sx1276_write(REG_OPMODE, opmode);
 		return RADIO_RESULT_OK;
 	case RADIO_PARAM_16BIT_ADDR:
 		node_id = (uint16_t) value; // No way to change SX1276 Address on Lora mode?
 		return RADIO_RESULT_OK;
 	case RADIO_PARAM_TXPOWER:
-		opmode = sx1276_read(REG_OPMODE);
+		//opmode = sx1276_read(REG_OPMODE);
 		sx1276_set_sleep();
 		sx1276_set_txconfig(MODEM_LORA, value, 0, LORA_BANDWIDTH,
 																		LORA_SPREADING_FACTOR, LORA_CODINGRATE,
 																		LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
 																		true, 0, 0, LORA_IQ_INVERSION_ON, 3000);
-		sx1276_write(REG_OPMODE, opmode);
+		//sx1276_write(REG_OPMODE, opmode);
 		return RADIO_RESULT_OK;
 	default:
   	return RADIO_RESULT_NOT_SUPPORTED;
 	}
-}
+}*/
 /*---------------------------------------------------------------------------*/
-static radio_result_t
+/*static radio_result_t
 sx1276_radio_get_object(radio_param_t param, void *dest, size_t size)
 {
   return RADIO_RESULT_NOT_SUPPORTED;
-}
+}*/
 /*---------------------------------------------------------------------------*/
-static radio_result_t
+/*static radio_result_t
 sx1276_radio_set_object(radio_param_t param, const void *src, size_t size)
 {
   return RADIO_RESULT_NOT_SUPPORTED;
-}
+}*/
 /*---------------------------------------------------------------------------*/
 const struct radio_driver sx1276_driver =
 {
@@ -507,9 +502,9 @@ const struct radio_driver sx1276_driver =
   sx1276_radio_pending_packet,
   sx1276_radio_on,
   sx1276_radio_off,
-	sx1276_radio_get_value,
-  sx1276_radio_set_value,
-  sx1276_radio_get_object,
-  sx1276_radio_set_object,
+	//sx1276_radio_get_value,
+  //sx1276_radio_set_value,
+  //sx1276_radio_get_object,
+  //sx1276_radio_set_object,
 };
 /*---------------------------------------------------------------------------*/

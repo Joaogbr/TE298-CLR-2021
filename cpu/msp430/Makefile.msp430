@@ -41,7 +41,7 @@ endif
 CONTIKI_CPU_DIRS = $(CONTIKI_CPU_FAM_DIR) . dev
 
 MSP430     = msp430.c clock.c leds.c leds-arch.c \
-			 watchdog.c lpm.c rtimer-arch.c
+			       watchdog.c lpm.c rtimer-arch.c
 ifneq (,$(findstring msp430fr,$(MCU)))
  MSP430    += fram.c
 else
@@ -118,7 +118,7 @@ CUSTOM_RULE_C_TO_O = 1
 
 define FINALIZE_CYGWIN_DEPENDENCY
 sed -e 's/ \([A-Z]\):\\/ \/cygdrive\/\L\1\//' -e 's/\\/\//g' \
-		<$(@:.o=.P) >$(@:.o=.d); \
+		  <$(@:.o=.P) >$(@:.o=.d); \
 rm -f $(@:.o=.P)
 endef
 
@@ -235,6 +235,9 @@ CUSTOM_RULE_LINK=1
 %.hex: %.elf
 	$(OBJCOPY) $^ -O ihex $@
 
+  # Added to work around mspgcc FRAM bug
+	srec_cat $@ -intel -exclude 0xFF80 0xFF84 -o $@ -intel
+
 else
 
 %-stripped.o: %.c
@@ -262,6 +265,12 @@ else
 %.ihex: %.$(TARGET)
 	$(OBJCOPY) $^ -O ihex $@
 endif
+
+endif
+
+ifneq (,$(findstring msp430fr5969,$(MCU)))
+
+LDFLAGS += -Wl,-L $(CONTIKI_CPU)/fr59xx/ldscript -Wl,-T $(CONTIKI_CPU)/fr59xx/ldscript/msp430fr5969.x
 
 endif
 

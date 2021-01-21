@@ -53,8 +53,8 @@ leds_arch_init(void)
 unsigned char
 leds_arch_get(void)
 {
-  return ((P4OUT & LEDS_CONF_RED) ? 0 : LEDS_RED)
-    | ((P1OUT & LEDS_CONF_GREEN) ? 0 : LEDS_GREEN);
+  return ((P4OUT & LEDS_CONF_RED) ? LEDS_RED : 0)
+    | ((P1OUT & LEDS_CONF_GREEN) ? LEDS_GREEN : 0);
 }
 /*---------------------------------------------------------------------------*/
 void

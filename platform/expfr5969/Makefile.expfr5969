@@ -12,7 +12,7 @@ CONTIKI_TARGET_SOURCEFILES += contiki-expfr5969-platform.c \
 
 ARCH=node-id.c rtcc.c leds.c \
 	 leds-arch.c \
-	 uart0.c slip_uart0.c uart0-putchar.c \
+	 mpu.c uart0.c slip_uart0.c uart0-putchar.c \
 	 sx1276-arch.c sx1276.c spi.c
 
 
@@ -29,10 +29,12 @@ MCU=msp430fr5969
 # Platform has a MSP430X MCU with 20-bit support
 CPU_HAS_MSP430X=1
 
-### Unless the example dictates otherwise, build with code size optimisations
+### Unless the example dictates otherwise, build with code size optimizations
 ifndef SMALL
   SMALL = 1
 endif
+
+#$(info    SMALL is $(SMALL))
 
 ifdef NODE_ID
 CFLAGS+=-DNODE_ID=$(NODE_ID)

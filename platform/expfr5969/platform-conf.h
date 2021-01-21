@@ -1,6 +1,6 @@
 /**
- * \Contiki port for LoRa MSP430FR5969 platform, 
- *\author 
+ * \Contiki port for LoRa MSP430FR5969 platform,
+ *\author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  */
 
