@@ -34,7 +34,7 @@
 /**
  * \file
  *         msp430.c
- * \Contiki port, author 
+ * \Contiki port, author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  * \Adopted from:
  *         Andrea Gaglione <and.gaglione@gmail.com>
@@ -115,8 +115,8 @@ static void
 init_ports(void)
 {
 #ifdef REFCTL0
-  REFCTL0 |= REFTCOFF;
-  REFCTL0 &= ~REFON;
+  REFCTL0 |= REFTCOFF; // ADC Temp sensor disable
+  REFCTL0 &= ~REFON; // ADC large buffer disable
 #endif
 
 #ifdef P1SEL0
@@ -131,6 +131,9 @@ init_ports(void)
 #ifdef P2SEL1
     P2SEL1 = 0;
 #endif
+#ifdef P3SEL0
+    P3SEL0 = 0;
+#endif
 #ifdef P3SEL1
     P3SEL1 = 0;
 #endif
@@ -140,6 +143,30 @@ init_ports(void)
 #ifdef P4SEL1
     P4SEL1 = 0;
 #endif
+#ifdef P5SEL0
+    P5SEL0 = 0;
+#endif
+#ifdef P5SEL1
+    P5SEL1 = 0;
+#endif
+#ifdef P6SEL0
+    P6SEL0 = 0;
+#endif
+#ifdef P6SEL1
+    P6SEL1 = 0;
+#endif
+#ifdef P7SEL0
+    P7SEL0 = 0;
+#endif
+#ifdef P7SEL1
+    P7SEL1 = 0;
+#endif
+#ifdef P8SEL0
+    P8SEL0 = 0;
+#endif
+#ifdef P8SEL1
+    P8SEL1 = 0;
+#endif
 
   PJSEL0 = 0;
   PJSEL1 = 0;
@@ -148,32 +175,91 @@ init_ports(void)
   P1OUT = 0;
   P1DIR = 0xFF;
   P1REN = 0xFF;
+  P1IES = 0;
 #endif
 #ifdef P2DIR
   P2OUT = 0;
   P2DIR = 0xFF;
   P2REN = 0xFF;
+  P2IES = 0;
 #endif
 #ifdef P3DIR
   P3OUT = 0;
   P3DIR = 0xFF;
   P3REN = 0xFF;
+  P3IES = 0;
 #endif
 #ifdef P4DIR
   P4OUT = 0;
   P4DIR = 0xFF;
   P4REN = 0xFF;
+  P4IES = 0;
+#endif
+#ifdef P5DIR
+  P5OUT = 0;
+  P5DIR = 0xFF;
+  P5REN = 0xFF;
+  P5IES = 0;
+#endif
+#ifdef P6DIR
+  P6OUT = 0;
+  P6DIR = 0xFF;
+  P6REN = 0xFF;
+  P6IES = 0;
+#endif
+#ifdef P7DIR
+  P7OUT = 0;
+  P7DIR = 0xFF;
+  P7REN = 0xFF;
+  P7IES = 0;
+#endif
+#ifdef P8DIR
+  P8OUT = 0;
+  P8DIR = 0xFF;
+  P8REN = 0xFF;
+  P8IES = 0;
 #endif
 
   PJOUT = 0;
   PJDIR = 0xFFFF;
   PJREN = 0xFF;
+}
+/*--------------------------------------------------------------------------*/
+static void
+init_interrupts(void){
+  P1IFG = 0;
+  P2IFG = 0;
+  P3IFG = 0;
+  P4IFG = 0;
+#ifdef P5IFG
+  P5IFG = 0;
+#endif
+#ifdef P6IFG
+  P6IFG = 0;
+#endif
+#ifdef P7IFG
+  P7IFG = 0;
+#endif
+#ifdef P8IFG
+  P8IFG = 0;
+#endif
 
   P1IE = 0;
   P2IE = 0;
   P3IE = 0;
   P4IE = 0;
-
+#ifdef P5IE
+  P5IE = 0;
+#endif
+#ifdef P6IE
+  P6IE = 0;
+#endif
+#ifdef P7IE
+  P7IE = 0;
+#endif
+#ifdef P8IE
+  P8IE = 0;
+#endif
 }
 /*--------------------------------------------------------------------------*/
 static void
@@ -230,9 +316,10 @@ void
 msp430_cpu_init(void)
 {
   dint();
-  unlock_PMM_module();
   watchdog_init();
-  //init_ports();   /* Disabling This reduces the power cons on the current board...TODO */
+  init_ports();   /* Disabling This reduces the power cons on the current board...TODO */
+  unlock_PMM_module();
+  init_interrupts();
   msp430_init_dco();
   eint();
 #if defined(__MSP430__) && defined(__GNUC__)

@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 2010, Swedish Institute of Computer Science
+ * Copyright (c) 2006, Swedish Institute of Computer Science.
  * All rights reserved.
- *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,22 +26,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * This file is part of the Contiki operating system.
- *
  */
-
-/**
- * \Contiki port, author
- *         Rajeev Piyare <rajeev.piyare@hotmail.com>
- */
-
+ 
+#include "contiki.h"
+#include "dev/leds.h"
 #include "dev/button-sensor.h"
 
-SENSORS(&button_sensor);
-// SENSORS(&button_sensor, &wur_sensor);
+#include <stdio.h>
 
-void
-init_platform(void)
+PROCESS(test_button_process, "Test button process");
+AUTOSTART_PROCESSES(&test_button_process);
+
+PROCESS_THREAD(test_button_process, ev, data)
 {
-  process_start(&sensors_process, NULL);
+  static int counter = 0;
+
+  PROCESS_BEGIN();
+
+  printf("Starting Button test process (counter=%i)\n", counter);
+  button_sensor.configure(SENSORS_ACTIVE, 1);
+
+  while(1) {
+    PROCESS_WAIT_EVENT();
+
+    if(ev == sensors_event && data == &button_sensor) {
+      counter++;
+      leds_toggle(LEDS_ALL);
+      printf("Button pressed (counter=%i)\n", counter);
+    }
+  }
+
+  PROCESS_END();
 }

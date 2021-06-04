@@ -28,82 +28,42 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * -----------------------------------------------------------------
  *
- * \author
+ *\original author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
+ * Created : 2018-02-02
+ *\modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
-#include "contiki.h"
-#include "lib/sensors.h"
-#include "dev/hwconf.h"
-#include "dev/button-sensor.h"
+
+#include "contiki-conf.h"
 #include "dev/leds.h"
-#include "isr_compat.h"
 
-const struct sensors_sensor button_sensor;
-
-static struct timer debouncetimer;
-static int status(int type);
-
-/* Button port for FR5969 Launchpad V3.0 -> P4.5 */
-HWCONF_PINx(BUTTON, 4, 5, 0);
-HWCONF_IRQx(BUTTON, 4, 5);
+/* LED ports for MSP430FR5994 Launchpad */
+#define LEDS_CONF_RED    BIT0
+#define LEDS_CONF_GREEN  BIT1
 
 /*---------------------------------------------------------------------------*/
-ISR(PORT4, irq_button)
+void
+leds_arch_init(void)
 {
-  ENERGEST_ON(ENERGEST_TYPE_IRQ);
-  if(BUTTON_CHECK_IRQ()) {
-   if(timer_expired(&debouncetimer)) {
-      timer_set(&debouncetimer, CLOCK_SECOND / 4);
-      sensors_changed(&button_sensor);
-      leds_toggle(LEDS_ALL);
-      LPM4_EXIT;
-    }
-  }
-  BUTTON_CLEAR_IRQ();
-  ENERGEST_OFF(ENERGEST_TYPE_IRQ);
+  /* only two LEDS are currently available on the platform, configured as RED and GREEN */
+  P1DIR |= (LEDS_CONF_RED | LEDS_CONF_GREEN);
 }
 /*---------------------------------------------------------------------------*/
-static int
-value(int type)
+unsigned char
+leds_arch_get(void)
 {
-  return BUTTON_READ() || !timer_expired(&debouncetimer);
+  return ((P1OUT & LEDS_CONF_RED) ? LEDS_RED : 0)
+    | ((P1OUT & LEDS_CONF_GREEN) ? LEDS_GREEN : 0);
 }
 /*---------------------------------------------------------------------------*/
-static int
-configure(int type, int c)
+void
+leds_arch_set(unsigned char leds)
 {
-  switch (type) {
-  case SENSORS_ACTIVE:
-    if (c) {
-      if(!status(SENSORS_ACTIVE)) {
-
-      timer_set(&debouncetimer, 0);
-
-      BUTTON_SET();
-      BUTTON_MAKE_INPUT();
-      BUTTON_ENABLE_PULLUP();
-      BUTTON_IRQ_EDGE_SELECTD();
-      BUTTON_ENABLE_IRQ();
-      BUTTON_CLEAR_IRQ();
-      }
-    } else {
-      BUTTON_DISABLE_IRQ();
-    }
-    return 1;
-  }
-  return 0;
+  P1OUT = (P1OUT & ~(LEDS_CONF_RED | LEDS_CONF_GREEN))
+  | ((leds & LEDS_RED) ? LEDS_CONF_RED : 0)
+  | ((leds & LEDS_GREEN) ? LEDS_CONF_GREEN : 0);
 }
 /*---------------------------------------------------------------------------*/
-static int
-status(int type)
-{
-  switch (type) {
-  case SENSORS_ACTIVE:
-  case SENSORS_READY:
-    return BUTTON_IRQ_ENABLED();
-  }
-  return 0;
-}
-/*---------------------------------------------------------------------------*/
-SENSORS_SENSOR(button_sensor, BUTTON_SENSOR, value, configure, status);

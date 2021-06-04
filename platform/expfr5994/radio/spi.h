@@ -1,8 +1,10 @@
 /*
  * spi.h
  *
- *  Rajeev Piyare <rajeev.piyare@hotmail.com>
- *  Created : 2018-02-12
+ *\original author
+ *         Rajeev Piyare <rajeev.piyare@hotmail.com>
+ *\modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
 
 #ifndef SPI_H_
@@ -12,13 +14,13 @@
 
 extern volatile uint8_t spi_buf;
 
-#define CS          BIT0
-#define RESET       BIT4
+#define CS          BIT4
+#define RESET       BIT2
 #define SCLK        BIT2
-#define MOSI        BIT6
-#define MISO        BIT7
-#define DIO_0       BIT3
-#define DIO_3       BIT4
+#define MOSI        BIT0
+#define MISO        BIT1
+#define DIO_0       BIT1
+#define DIO_3       BIT3
 
 /*
  * Initialize the hardware

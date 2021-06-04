@@ -216,7 +216,7 @@ PROJECT_OBJECTFILES += ${addprefix $(OBJECTDIR)/,$(CONTIKI_TARGET_MAIN:.c=.o)}
 
 ### Compilation rules
 
-ifneq (,$(findstring msp430fr,$(MCU)))
+ifneq (,$(findstring msp430fr5,$(MCU)))
 
 CUSTOM_RULE_LINK=1
 %.elf: %.co $(PROJECT_OBJECTFILES) $(PROJECT_LIBRARIES) contiki-$(TARGET).a
@@ -236,7 +236,7 @@ CUSTOM_RULE_LINK=1
 	$(OBJCOPY) $^ -O ihex $@
 
   # Added to work around mspgcc FRAM bug
-	srec_cat $@ -intel -exclude 0xFF80 0xFF84 -o $@ -intel
+	#srec_cat $@ -intel -exclude 0xFF80 0xFF84 -o $@ -intel
 
 else
 
@@ -268,9 +268,9 @@ endif
 
 endif
 
-ifneq (,$(findstring msp430fr5969,$(MCU)))
+ifneq (,$(findstring msp430fr5994,$(MCU)))
 
-LDFLAGS += -Wl,-L $(CONTIKI_CPU)/fr59xx/ldscript -Wl,-T $(CONTIKI_CPU)/fr59xx/ldscript/msp430fr5969.x
+LDFLAGS += -Wl,-L $(CONTIKI_CPU)/fr59xx/ldscripts/msp430fr5994 -Wl,-T $(CONTIKI_CPU)/fr59xx/ldscripts/msp430fr5994/msp430fr5994.x
 
 endif
 

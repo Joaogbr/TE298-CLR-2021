@@ -65,28 +65,28 @@ static uint8_t RxTxBuffer[RX_BUFFER_SIZE];
 sx1276_t sx1276;
 
 /*---------------------------------------------------------------------------*/
-#define DIO0  ((P1IN & BIT3) != 0)
+#define DIO0  ((P4IN & BIT1) != 0)
 /*
  * Enable/Disable DIO0 interrupt
  */
 #define ENABLE_DIO0_IT\
   do {\
     sx1276_write(REG_LR_IRQFLAGS, RFLR_IRQFLAGS_RXDONE);\
-    P1IFG &= ~BIT3;\
-    P1IE |= BIT3;\
+    P4IFG &= ~BIT1;\
+    P4IE |= BIT1;\
   } while(0)
-#define DISABLE_DIO0_IT (P1IE &= ~BIT3)
+#define DISABLE_DIO0_IT (P4IE &= ~BIT1)
 /*---------------------------------------------------------------------------*/
-#define DIO3  ((P3IN & BIT4) != 0)
+#define DIO3  ((P6IN & BIT3) != 0)
 /*
  * Enable/Disable DIO3 interrupt. Should RFLR_IRQFLAGS_CADDONE and RFLR_IRQFLAGS_CADDETECTED be cleared (in the case of timeout)?
  */
 #define ENABLE_DIO3_IT\
   do {\
-    P3IFG &= ~BIT4;\
-    P3IE |= BIT4;\
+    P6IFG &= ~BIT3;\
+    P6IE |= BIT3;\
   } while(0)
-#define DISABLE_DIO3_IT (P3IE &= ~BIT4)
+#define DISABLE_DIO3_IT (P6IE &= ~BIT3)
 /*---------------------------------------------------------------------------*/
 
 typedef struct {
@@ -174,15 +174,15 @@ void sx1276_init(RadioEvents_t *events) {
   //ctimer_set(&RxTimeoutSyncWord, CLOCK_SECOND, sx1276_on_timeout_irq, NULL);
 
   // Setting the NRESET pin up defined in spi.c
-  P1DIR |= RESET;
-  P1OUT |= RESET;
+  P4DIR |= RESET;
+  P4OUT |= RESET;
   // Waiting 10ms (datasheet)
   delay_ms(10);
 
-  // Init irq interrupts DIO_0 on Port1 Bit 3
+  // Init irq interrupts DIO_0 on Port4 Bit 1
   dio0irq_init();
 
-  // Init irq interrupts DIO_3 on Port3 Bit 4
+  // Init irq interrupts DIO_3 on Port6 Bit 3
   dio3irq_init();
 
   sx1276_reset();
@@ -212,9 +212,9 @@ void sx1276_init(RadioEvents_t *events) {
 
 void sx1276_reset() {
 
-  P1OUT &= ~RESET;
+  P4OUT &= ~RESET;
   delay_ms(1); // Wait 1 ms
-  P1OUT |= RESET;
+  P4OUT |= RESET;
   delay_ms(6); // Wait 6 ms
 }
 
@@ -1267,7 +1267,6 @@ uint8_t sx1276_read(uint8_t addr) {
 void sx1276_read_buffer(uint8_t addr, uint8_t *data, uint8_t len) {
   uint8_t i;
 
-  //spi_enable();
   spi_chipEnable();
   // __delay_cycles(20);
   spi_transfer(addr & 0x7f);
@@ -1279,7 +1278,6 @@ void sx1276_read_buffer(uint8_t addr, uint8_t *data, uint8_t len) {
   }
 
   spi_chipDisable();
-  //spi_disable();
 }
 
 void sx1276_read_fifo(uint8_t *data, uint8_t len) {
@@ -1666,32 +1664,32 @@ void sx1276_on_dio3irq()
 }
 
 
-#pragma vector=PORT1_VECTOR
-__interrupt void port1_interrupt_handler(void)
+#pragma vector=PORT4_VECTOR
+__interrupt void port4_interrupt_handler(void)
 {
     ENERGEST_ON(ENERGEST_TYPE_IRQ);
-    if (P1IFG & BIT3)
+    if (P4IFG & BIT1)
     {
         LPM4_EXIT;
         sx1276_on_dio0irq();
 
     }
     // Reset the interrupt flag
-    P1IFG &= ~BIT3;
+    P4IFG &= ~BIT1;
     ENERGEST_OFF(ENERGEST_TYPE_IRQ);
 }
 
-#pragma vector=PORT3_VECTOR
-__interrupt void port3_interrupt_handler(void)
+#pragma vector=PORT6_VECTOR
+__interrupt void port6_interrupt_handler(void)
 {
     ENERGEST_ON(ENERGEST_TYPE_IRQ);
-    if (P3IFG & BIT4)
+    if (P6IFG & BIT3)
     {
         LPM4_EXIT;
         sx1276_on_dio3irq();
 
     }
     // Reset the interrupt flag
-    P3IFG &= ~BIT4;
+    P6IFG &= ~BIT3;
     ENERGEST_OFF(ENERGEST_TYPE_IRQ);
 }

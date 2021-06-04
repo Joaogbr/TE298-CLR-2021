@@ -32,9 +32,13 @@
  */
 
 /**
- * \Contiki port, author
+ * \Contiki port for LoRa MSP430FR5994 platform,
+ *\original author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
+ *\modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
+
 
 #include "dev/button-sensor.h"
 

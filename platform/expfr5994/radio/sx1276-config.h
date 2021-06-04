@@ -46,8 +46,8 @@
 // #define FSK_PREAMBLE_LENGTH            	5         // Same for Tx and Rx
 // #define FSK_FIX_LENGTH_PAYLOAD_ON      	false
 
-#define TX_OUTPUT_POWER	        				5		// dBm
-#define LORA_FDEV 		          				0
+#define TX_OUTPUT_POWER					        5		// dBm
+#define LORA_FDEV 						          0
 #define LORA_BANDWIDTH                 	0      	// [0: 125 kHz, 1: 250 kHz, 2: 500 kHz, 3: Reserved]
 #define LORA_SPREADING_FACTOR          	7     	// [SF7..SF12]
 #define LORA_CODINGRATE                	1     	// [1: 4/5, 2: 4/6, 3: 4/7, 4: 4/8]

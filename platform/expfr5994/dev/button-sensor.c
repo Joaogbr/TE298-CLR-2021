@@ -28,15 +28,19 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *
- * \author
+ */
+
+ /**
+ * \Contiki port for LoRa MSP430FR5994 platform,
+ *\original author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
+ *\modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
 #include "contiki.h"
 #include "lib/sensors.h"
 #include "dev/hwconf.h"
 #include "dev/button-sensor.h"
-#include "dev/leds.h"
 #include "isr_compat.h"
 
 const struct sensors_sensor button_sensor;
@@ -44,19 +48,18 @@ const struct sensors_sensor button_sensor;
 static struct timer debouncetimer;
 static int status(int type);
 
-/* Button port for FR5969 Launchpad V3.0 -> P4.5 */
-HWCONF_PINx(BUTTON, 4, 5, 0);
-HWCONF_IRQx(BUTTON, 4, 5);
+/* Button port for FR5994 Launchpad -> P5.6 */
+HWCONF_PINx(BUTTON, 5, 6, 0);
+HWCONF_IRQx(BUTTON, 5, 6);
 
 /*---------------------------------------------------------------------------*/
-ISR(PORT4, irq_button)
+ISR(PORT5, irq_button)
 {
   ENERGEST_ON(ENERGEST_TYPE_IRQ);
   if(BUTTON_CHECK_IRQ()) {
    if(timer_expired(&debouncetimer)) {
       timer_set(&debouncetimer, CLOCK_SECOND / 4);
       sensors_changed(&button_sensor);
-      leds_toggle(LEDS_ALL);
       LPM4_EXIT;
     }
   }

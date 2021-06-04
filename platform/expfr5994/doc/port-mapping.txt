@@ -1,0 +1,32 @@
+/**
+ * \Contiki port for LoRa MSP430FR5994 platform,
+ *\original author
+ *         Rajeev Piyare <rajeev.piyare@hotmail.com>
+ *\modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
+ */
+
+/* Refer to the schematics for the PIN Diagram for the sensor mote*/
+/* Peripheral mapping */
+
+LED RED      P1.0
+LED GREEN    P1.1
+
+Button S1    P5.6
+Button S2    P5.5
+
+Serial port  UCA3
+UART TX		 P6.0
+UART RX		 P6.1
+
+
+/* SX1276 Radio Driver SPI Connections */
+
+LoRa SPI	UCB1
+
+LoRa CS     P4.4
+LoRa DIO_0	P4.1
+LoRa RESET	P4.2
+LoRa MOSI	  P5.0 (UCB1SIMO)
+LoRa MISO   P5.1 (UCB1SOMI)
+LoRa SCLK	  P5.2 (UCB1CLK)

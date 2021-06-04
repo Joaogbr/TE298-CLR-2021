@@ -5003,4 +5003,3 @@ sfrw(WDTCTL, WDTCTL_);
 #endif /* extern "C" */
 
 #endif /* #ifndef __MSP430FR5969 */
-

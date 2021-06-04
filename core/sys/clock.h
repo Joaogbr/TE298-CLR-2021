@@ -142,6 +142,8 @@ void clock_delay(unsigned int delay);
 
 void delay_ms(unsigned int ms);
 
+void delay_us(unsigned int us);
+
 #endif /* CLOCK_H_ */
 
 /** @} */

@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * \Contiki port, author 
+ * \Contiki port, author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  * \Adopted from:
  *         Andrea Gaglione <and.gaglione@gmail.com>
@@ -262,6 +262,24 @@ void delay_ms(unsigned int ms)
 
       #endif
         ms--;
+    }
+}
+/*---------------------------------------------------------------------------*/
+/**
+ * Delay the CPU for a multiple of 1us.
+ */
+void delay_us(unsigned int us)
+{
+    while (us)
+    {
+      #if F_CPU == 8000000uL
+        __delay_cycles(8); //8 for 8 MHz
+
+      #else
+        __delay_cycles(1); //1 for 1MHz
+
+      #endif
+        us--;
     }
 }
 /*---------------------------------------------------------------------------*/

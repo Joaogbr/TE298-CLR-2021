@@ -30,10 +30,13 @@
  *
  * spi.c
  *
- * \Contiki port, author
+ * \Contiki port, original author
  *  Rajeev Piyare <rajeev.piyare@hotmail.com>
  *  Created : 2018-02-12
+ * \modified by
+ *  João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
+
 #include "contiki.h"
 #include <msp430.h>
 #include "spi.h"
@@ -54,125 +57,108 @@
  * This is SPI initialization code for the MSP430X architecture.
  *
  */
-//  Mapping MSP430FR5969 Launchpad <-> SX1276 (May 2020)
-//                   Launchpad
-//                 -----------------
-//                |                 |
-//                |             P1.6|-> Data Out (UCB0SIMO)
-//                |                 |
-//                |             P1.7|<- Data In (UCB0SOMI)
-//                |                 |
-//                |             P2.2|-> Serial Clock Out (UCB0CLK)
-//                |                 |
-//                |             P3.0|-> CS
-//                |                 |
-//                |             P1.4|-> RESET
-//                |                 |
-//                |             P1.3|<-> DIO_0
-//                |                 |
-//                |             P3.4|<-> DIO_3
-//                |                 |
-//                 -----------------
+ //  Mapping MSP430FR5994 Launchpad <-> SX1276 (Feb 2021)
+ //                   Launchpad
+ //                 -----------------
+ //                |                 |
+ //                |             P5.0|-> Data Out (UCB1SIMO)
+ //                |                 |
+ //                |             P5.1|<- Data In (UCB1SOMI)
+ //                |                 |
+ //                |             P5.2|-> Serial Clock Out (UCB1CLK)
+ //                |                 |
+ //                |             P4.4|-> CS
+ //                |                 |
+ //                |             P4.2|-> RESET
+ //                |                 |
+ //                |             P4.1|<-> DIO_0
+ //                |                 |
+ //                |             P6.3|<-> DIO_3
+ //                |                 |
+ //                 -----------------
 /*
  * Initialize SPI bus.
  */
 void spi_init(void)
 {
   // Configure GPIOs
-  P1DIR |= RESET;
-  P1SEL0 &= ~RESET;
-  P1SEL1 &= ~RESET;
-  P1OUT &= ~RESET;
-
-  P3DIR |= CS;
-  P3SEL0 &= ~CS;
-  P3SEL1 &= ~CS;
-  P3OUT |= CS;
+  P4DIR |= (RESET | CS);
+  P4SEL0 &= ~(RESET | CS);
+  P4SEL1 &= ~(RESET | CS);
+  P4OUT &= ~RESET;
+  P4OUT |= CS;
 
   // Configure SPI
-  P2SEL0 &= ~SCLK;
-  P2SEL1 |= SCLK;
-
-  P1SEL0 &= ~(MOSI | MISO);
-  P1SEL1 |= (MOSI | MISO);
-  //P1OUT &= ~MISO; // Pull down MISO?
+  P5SEL0 |= (MOSI | MISO | SCLK);
+  P5SEL1 &= ~(MOSI | MISO | SCLK);
 
   // Initialize ports for communication with SPI units.
+  UCB1CTLW0 = UCSWRST;               // Put state machine in reset
+  UCB1CTLW0 |= UCSSEL_2;             // SMCLK
+  UCB1CTLW0 |= UCMST | UCSYNC | UCCKPL | UCMSB; // MSB-first 8-bit, Master, Synchronous, 3 pin SPI master, no ste, watch-out for clock-phase UCCKPH
 
-  UCB0CTLW0 = UCSWRST;               // Put state machine in reset
-  UCB0CTLW0 |= UCSSEL_2;             // SMCLK
-  UCB0CTLW0 |= UCMST | UCSYNC | UCCKPL | UCMSB; // MSB-first 8-bit, Master, Synchronous, 3 pin SPI master, no ste, watch-out for clock-phase UCCKPH
+  UCB1BR0 = 0x02;
+  UCB1BR1 = 0x00;
 
-  UCB0BR0 = 0x02;
-  UCB0BR1 = 0x00;
-
-  UCB0CTLW0 &= ~UCSWRST;  // Initializing USCI and Remove RESET before enabling interrupts
+  UCB1CTLW0 &= ~UCSWRST;  // Initializing USCI and Remove RESET before enabling interrupts
 
 }
 
 void spi_enable(){
-  P2SEL0 &= ~SCLK;
-  P2SEL1 |= SCLK;
-
-  P1SEL0 &= ~(MOSI | MISO);
-  P1SEL1 |= (MOSI | MISO);
-  //P1OUT &= ~MISO; // Pull down MISO?
+  P5SEL0 |= (MOSI | MISO |SCLK);
+  P5SEL1 &= ~(MOSI | MISO | SCLK);
 }
 
 void spi_disable(){
-  P2DIR &= ~SCLK; // Configure as input
-  P2SEL0 &= ~SCLK;
-  P2SEL1 &= ~SCLK;
-
-  P1DIR &= ~(MOSI | MISO); // Configure as input
-  P1SEL0 &= ~(MOSI | MISO);
-  P1SEL1 &= ~(MOSI | MISO);
+  P5DIR &= ~(MOSI | MISO | SCLK); // Configure as input
+  P5SEL0 &= ~(MOSI | MISO | SCLK);
+  P5SEL1 &= ~(MOSI | MISO | SCLK);
 }
 
 void dio0irq_init(){
 
-  P1SEL0 &= ~DIO_0;
-  P1SEL1 &= ~DIO_0;
-  P1OUT &= ~DIO_0;   // Pull down
-  P1DIR &= ~DIO_0;   // configure as input for the interrupt signal
-  P1REN |= DIO_0;
-  P1IES &= ~DIO_0;   // Interrupt on a low to high transition
-  P1IE  &= ~DIO_0;   // Interrupt disabled
-  P1IFG &= ~DIO_0;   // Clear DIO0 interrupt
+  P4SEL0 &= ~DIO_0;
+  P4SEL1 &= ~DIO_0;
+  P4OUT &= ~DIO_0;   // Pull down
+  P4DIR &= ~DIO_0;   // configure as input for the interrupt signal
+  P4REN |= DIO_0;
+  P4IES &= ~DIO_0;   // Interrupt on a low to high transition
+  P4IE  &= ~DIO_0;   // Interrupt disabled
+  P4IFG &= ~DIO_0;   // Clear DIO0 interrupt
 
 }
 
 void dio3irq_init(){
 
-  P3SEL0 &= ~DIO_3;
-  P3SEL1 &= ~DIO_3;
-  P3OUT &= ~DIO_3;   // Pull down
-  P3DIR &= ~DIO_3;   // configure as input for the interrupt signal
-  P3REN |= DIO_3;
-  P3IES &= ~DIO_3;   // Interrupt on a low to high transition
-  P3IE  &= ~DIO_3;   // Interrupt disabled
-  P3IFG &= ~DIO_3;   // Clear DIO3 interrupt
+  P6SEL0 &= ~DIO_3;
+  P6SEL1 &= ~DIO_3;
+  P6OUT &= ~DIO_3;   // Pull down
+  P6DIR &= ~DIO_3;   // configure as input for the interrupt signal
+  P6REN |= DIO_3;
+  P6IES &= ~DIO_3;   // Interrupt on a low to high transition
+  P6IE  &= ~DIO_3;   // Interrupt disabled
+  P6IFG &= ~DIO_3;   // Clear DIO3 interrupt
 
 }
 
 void spi_txready() {
-  while (!(UCB0IFG & UCTXIFG)); // TX buffer ready?
+  while (!(UCB1IFG & UCTXIFG)); // TX buffer ready?
 }
 
 void spi_rxready() {
-  while (!(UCB0IFG & UCRXIFG)); // RX Received?
+  while (!(UCB1IFG & UCRXIFG)); // RX Received?
 }
 
 void spi_send(uint8_t data) {
   spi_txready();
-  UCB0TXBUF = data;            // Send data over SPI to Slave
+  UCB1TXBUF = data;            // Send data over SPI to Slave
   PRINTF("SPI send: %u\n", data);
 }
 
 uint8_t spi_recv() {
   uint8_t spi_buf = 0;
   spi_rxready();
-  spi_buf = UCB0RXBUF;         // Store received data
+  spi_buf = UCB1RXBUF;         // Store received data
   PRINTF("SPI recv: %u\n", spi_buf);
   return spi_buf;
 }
@@ -185,9 +171,9 @@ uint8_t spi_transfer(uint8_t data) {
 }
 
 void spi_chipEnable() {
-  P3OUT &= ~CS;
+  P4OUT &= ~CS;
 }
 
 void spi_chipDisable() {
-   P3OUT |= CS;
+   P4OUT |= CS;
 }

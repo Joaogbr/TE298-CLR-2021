@@ -41,6 +41,7 @@
 #include "sx1276.h"
 #include "sx1276-arch.h"
 #include "spi.h"
+#include "dev/button-sensor.h"
 /*---------------------------------------------------------------------------*/
 #define LEDS_DEBUG 1
 #if LEDS_DEBUG
@@ -64,9 +65,22 @@
 #endif
 /*---------------------------------------------------------------------------*/
 static struct etimer rx_timer;
-uint8_t rx_msg[256];
-uint8_t size;
-
+uint8_t *rx_msg;
+uint8_t hdrsize = 0;
+uint8_t datasize = 0;
+/*---------------------------------------------------------------------------*/
+void MsgInfo(){
+  int i;
+  hdrsize = packetbuf_hdrlen();
+  datasize = packetbuf_datalen();
+  rx_msg = packetbuf_hdrptr();
+  printf("RXD MSG: Header size = %d, Data size = %d\n", hdrsize, datasize);
+  PRINTF("RX Buffer: ");
+  for(i=0; i < (hdrsize + datasize); i++){
+    PRINTF("%u ", *(rx_msg + i));
+  }
+  PRINTF("\n");
+}
 /*---------------------------------------------------------------------------*/
 PROCESS(rx_process, "rx process");
 AUTOSTART_PROCESSES(&rx_process);
@@ -78,6 +92,7 @@ PROCESS_THREAD(rx_process, ev, data)
 
   //sx1276_driver.init();
   //sx1276_driver.on();
+  sx1276_set_rx(0);
 
   etimer_set(&rx_timer, 2 * CLOCK_SECOND);
 
@@ -86,12 +101,14 @@ PROCESS_THREAD(rx_process, ev, data)
     PROCESS_WAIT_EVENT();
 
     if(ev == PROCESS_EVENT_TIMER) {
-      sx1276_set_rx(0);
+      LEDS_ON(LEDS_ALL);
 
-      //size = sx1276_driver.read(rx_msg, sizeof(rx_msg));
-      //PRINTF("RXD MSG size: %d\n\r", size);
+      if(packetbuf_datalen() > 0){
+        MsgInfo();
+        packetbuf_clear();
+        LEDS_OFF(LEDS_ALL);
+      }
       PRINTF("Waiting for packet\n");
-
       etimer_reset(&rx_timer);
     }
   }

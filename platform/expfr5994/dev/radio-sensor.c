@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 2010, Swedish Institute of Computer Science
+ * Copyright (c) 2005, Swedish Institute of Computer Science
  * All rights reserved.
- *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,17 +31,41 @@
  */
 
 /**
- * \Contiki port, author
- *         Rajeev Piyare <rajeev.piyare@hotmail.com>
+ * \Contiki port, author 
+ *         Andrea Gaglione <and.gaglione@gmail.com>
+ *         David Rodenas-Herraiz <dr424@cam.ac.uk>
  */
 
-#include "dev/button-sensor.h"
+#include "lib/sensors.h"
+#include "dev/cc2520/cc2520.h"
+#include "dev/radio-sensor.h"
 
-SENSORS(&button_sensor);
-// SENSORS(&button_sensor, &wur_sensor);
+const struct sensors_sensor radio_sensor;
 
-void
-init_platform(void)
+/*---------------------------------------------------------------------------*/
+static int
+value(int type)
 {
-  process_start(&sensors_process, NULL);
+  switch(type) {
+  case RADIO_SENSOR_LAST_PACKET:
+    return cc2520_last_correlation;
+  case RADIO_SENSOR_LAST_VALUE:
+  default:
+    return cc2520_last_rssi;
+  }
 }
+/*---------------------------------------------------------------------------*/
+static int
+configure(int type, int c)
+{
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
+static int
+status(int type)
+{
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
+SENSORS_SENSOR(radio_sensor, RADIO_SENSOR,
+	       value, configure, status);

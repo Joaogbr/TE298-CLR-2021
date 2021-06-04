@@ -29,9 +29,8 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *
- *  transmitter.c
- *  Simple LoRa packet transmitter example in Contiki (bare Radio TX)
+ *  CAD.c
+ *  Simple LoRa CCA example in Contiki
  *  Rajeev Piyare <rajeev.piyare@hotmail.com>
  *  Created : 2018-02-28
  */
@@ -42,6 +41,7 @@
 #include "sx1276.h"
 #include "sx1276-arch.h"
 #include "spi.h"
+#include "dev/button-sensor.h"
 /*---------------------------------------------------------------------------*/
 #define LEDS_DEBUG 1
 #if LEDS_DEBUG
@@ -64,53 +64,33 @@
 #define PRINTDEBUG(...)
 #endif
 /*---------------------------------------------------------------------------*/
-//#define CLEAR_TXBUF()           (buffer = 0)
+static struct etimer cca_timer;
 /*---------------------------------------------------------------------------*/
-static struct etimer rx_timer;
-#define BUFFER_SIZE   64 // Define the payload size here
-uint8_t buffer[BUFFER_SIZE];
+PROCESS(cca_process, "cca process");
+AUTOSTART_PROCESSES(&cca_process);
 /*---------------------------------------------------------------------------*/
-void SendPing() {
-  buffer[0] = 0xFF;
-  buffer[1] = 0xFF;
-  buffer[2] = 0;
-  buffer[3] = 0;
-  buffer[4] = 'P';
-  buffer[5] = 'I';
-  buffer[6] = 'N';
-  buffer[7] = 'G';
-
-  sx1276_driver.send(buffer, 8);
-}
-
-/*---------------------------------------------------------------------------*/
-PROCESS(rx_process, "TX process");
-AUTOSTART_PROCESSES(&rx_process);
-/*---------------------------------------------------------------------------*/
-PROCESS_THREAD(rx_process, ev, data)
+PROCESS_THREAD(cca_process, ev, data)
 {
   PROCESS_BEGIN();
   PRINTF("Process has begun\n");
+  button_sensor.configure(SENSORS_ACTIVE, 1);
+  etimer_set(&cca_timer, CLOCK_SECOND/2);
 
-	//sx1276_driver.init();
-	// Start infinite RX
-	//sx1276_driver.on();
-
-	etimer_set(&rx_timer, 2*CLOCK_SECOND);
-  while( 1 )
+  while(1)
   {
     PROCESS_WAIT_EVENT();
 
     if(ev == PROCESS_EVENT_TIMER) {
-    	LEDS_ON(LEDS_ALL);
-    	SendPing();
-    	PRINTF("Sent the PING\n");
-    	LEDS_OFF(LEDS_ALL);
-
-		etimer_reset(&rx_timer);
+      LEDS_ON(LEDS_ALL);
+      if(sx1276_driver.channel_clear()){
+        PRINTF("Channel clear\n");
+      }
+      else{
+        PRINTF("Channel occupied\n");
+      }
+      LEDS_OFF(LEDS_ALL);
+      etimer_reset(&cca_timer);
     }
   }
   PROCESS_END();
 }
-
-/*---------------------------------------------------------------------------*/

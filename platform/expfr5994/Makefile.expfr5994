@@ -1,14 +1,13 @@
-# msp-exp430fr5969 platform makefile
+# msp-exp430fr5994 platform makefile
 
 ifndef CONTIKI
   $(error CONTIKI not defined! You must specify where CONTIKI resides!)
 endif
 
-CLEAN += symbols.c symbols.h *.elf *.expfr5969 *.hex Log
+CLEAN += symbols.c symbols.h *.elf *.expfr5994 *.hex Log
 
-CONTIKI_TARGET_SOURCEFILES += contiki-expfr5969-platform.c \
-	button-sensor.c \
-	# wur-sensor.c
+CONTIKI_TARGET_SOURCEFILES += contiki-expfr5994-platform.c \
+	button-sensor.c
 
 ARCH=node-id.c rtcc.c leds.c \
 	 leds-arch.c \
@@ -19,12 +18,12 @@ ARCH=node-id.c rtcc.c leds.c \
 CONTIKI_TARGET_DIRS = . dev radio tools
 
 ifndef CONTIKI_TARGET_MAIN
-CONTIKI_TARGET_MAIN = contiki-expfr5969-main.c
+CONTIKI_TARGET_MAIN = contiki-expfr5994-main.c
 endif
 
 CONTIKI_TARGET_SOURCEFILES += $(ARCH)
 
-MCU=msp430fr5969
+MCU=msp430fr5994
 
 # Platform has a MSP430X MCU with 20-bit support
 CPU_HAS_MSP430X=1
@@ -49,11 +48,11 @@ TARGET_LIBFILES += -lm
 
 help:
 	@echo
-	@echo "*** Contiki OS for EXPFR5969 board ***"
+	@echo "*** Contiki OS for EXPFR5994 board ***"
 	@echo "***        Some useful make commands         ***"
 	@echo
 	@echo "Save target"
-	@echo "	>> make TARGET=expfr5969 savetarget"
+	@echo "	>> make TARGET=expfr5994 savetarget"
 	@echo "Compile a project"
 	@echo "	>> make all"
 	@echo "Clean up any compiled object files, target files, etc."
@@ -65,8 +64,8 @@ help:
 	@echo "Debugs a project using standard gdb"
 	@echo
 	@echo "For more information, and to see how to use drivers and peripherals,"
-	@echo "e.g., button, LEDs, see the folders in examples/expfr5969"
-	@echo "and the files in platform/expfr5969 and cpu/msp430"
+	@echo "e.g., button, LEDs, see the folders in examples/expfr5994"
+	@echo "and the files in platform/expfr5994 and cpu/msp430"
 	@echo
 
 include $(CONTIKI)/cpu/msp430/Makefile.msp430
@@ -87,12 +86,12 @@ ifdef ACMPORT
 endif
 
 %.upload: %.hex
-	@echo "Programming EXPFR5969 with $< using MSP-FET Flash Emulation tool"
-	~/ti/MSPFlasher_1.3.20/MSP430Flasher -n msp430fr5969 -i $(ACMPORT) -e ERASE_MAIN -w $< -v -z [VCC]
+	@echo "Programming EXPFR5994 with $< using MSP-FET Flash Emulation tool"
+	~/ti/MSPFlasher_1.3.20/MSP430Flasher -n msp430fr5994 -i $(ACMPORT) -e ERASE_MAIN -w $< -v -z [VCC]
 
 %.upload-clean: %.hex
-	@echo "Programming EXPFR5969 with $< using MSP-FET"
-	msp430flasher -n msp430fr5969 -w $< -v -z [VCC]
+	@echo "Programming EXPFR5994 with $< using MSP-FET"
+	msp430flasher -n msp430fr5994 -w $< -v -z [VCC]
 
 # Check if we are running under Windows
 ifeq ($(HOST_OS),Windows)

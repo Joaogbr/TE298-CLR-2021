@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Swedish Institute of Computer Science
+ * Copyright (c) 2011, Swedish Institute of Computer Science
  * All rights reserved.
  *
  *
@@ -32,17 +32,56 @@
  */
 
 /**
- * \Contiki port, author
+ * \Contiki port, author 
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
+ * \Adopted from:
+ *         Andrea Gaglione <and.gaglione@gmail.com>
+ *         David Rodenas-Herraiz <dr424@cam.ac.uk>
  */
 
-#include "dev/button-sensor.h"
 
-SENSORS(&button_sensor);
-// SENSORS(&button_sensor, &wur_sensor);
+#include "sys/node-id.h"
+#include "contiki-conf.h"
 
+unsigned short node_id = 0;
+unsigned char node_mac[8];
+
+/*---------------------------------------------------------------------------*/
 void
-init_platform(void)
+node_id_restore(void)
 {
-  process_start(&sensors_process, NULL);
+  /*
+  uint8_t *infomem;
+  infomem = (uint8_t *) 0x1800;
+  uint8_t i;
+  if(infomem[0] == 0xab && infomem[1] == 0xcd) {
+    for(i = 0; i < 8; i++) {
+      node_mac[i] = infomem[2 + i];
+    }
+  } else {
+    node_mac[0] = 0xDA; // Hardcoded for EXP-MSP430FR5731
+    node_mac[1] = 0x0A; // Hardcoded for Revision A
+    node_mac[3] = 0x00; // Hardcoded to arbitrary even number so that the 802.15.4 MAC address
+                        // is compatible with an Ethernet MAC address - byte 0 (byte 2 in the DS ID)
+    node_mac[3] = 0x00; // Hardcoded
+    node_mac[4] = 0x00; // Hardcoded
+    node_mac[5] = 0x01; // Hardcoded
+    node_mac[6] = 0x02; // Hardcoded
+    node_mac[7] = 0x03; // Hardcoded
+  }
+  node_id = node_mac[7] | (node_mac[6] << 2);
+  */
+  node_id = 0;
 }
+/*---------------------------------------------------------------------------*/
+void
+node_id_burn(unsigned short id)
+{
+
+  /*
+   * The node's mac address is placed in Information memory of MSPFR5739 (128 B)
+   * See Page 49 in SLAS639 at http://www.ti.com/lit/pdf/SLAS639
+   */
+   // ToDo
+}
+/*---------------------------------------------------------------------------*/
