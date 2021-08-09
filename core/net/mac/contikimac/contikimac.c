@@ -230,6 +230,10 @@ static int we_are_receiving_burst = 0;
 #define CONTIKIMAC_SEND_SW_ACK 0
 #endif
 
+#ifndef IS_RADIO_LORA
+#define IS_RADIO_LORA 0
+#endif
+
 #define ACK_LEN 3
 
 #include <stdio.h>
@@ -242,7 +246,7 @@ static volatile uint8_t contikimac_keep_radio_on = 0;
 static volatile unsigned char we_are_sending = 0;
 static volatile unsigned char radio_is_on = 0;
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -423,15 +427,28 @@ powercycle(struct rtimer *t, void *ptr)
              the radio medium to make sure that we wasn't woken up by a
              false positive: a spurious radio interference that was not
              caused by an incoming packet. */
+#if IS_RADIO_LORA
+        if(NETSTACK_RADIO.pending_packet() == 0) {
+          packet_seen = 1;
+          break;
+        }
+#endif
         if(NETSTACK_RADIO.channel_clear() == 0) {
           packet_seen = 1;
           break;
         }
-        powercycle_turn_radio_off();
+#if !IS_RADIO_LORA
+        //powercycle_turn_radio_off();
+#endif
       }
       schedule_powercycle_fixed(t, RTIMER_NOW() + CCA_SLEEP_TIME);
       PT_YIELD(&pt);
     }
+#if IS_RADIO_LORA
+    if(we_are_sending == 0 && we_are_receiving_burst == 0) {
+      powercycle_turn_radio_off();
+    }
+#endif
 
     if(packet_seen) {
       static rtimer_clock_t start;

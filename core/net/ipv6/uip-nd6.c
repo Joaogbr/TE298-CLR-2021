@@ -148,7 +148,7 @@ extract_lladdr_from_llao_aligned(uip_lladdr_t *dest) {
 }
 #endif /* UIP_ND6_SEND_NA || UIP_ND6_SEND_RA || !UIP_CONF_ROUTER */
 /*------------------------------------------------------------------*/
-#if UIP_ND6_SEND_NA || UIP_ND6_SEND_NS || UIP_ND6_SEND_RA || !UIP_CONF_ROUTER /* UIP_ND6_SEND_NA */
+#if UIP_ND6_SEND_NA /* UIP_ND6_SEND_NA */
 /* create a llao */
 static void
 create_llao(uint8_t *llao, uint8_t type) {

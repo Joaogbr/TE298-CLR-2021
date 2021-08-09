@@ -10,8 +10,8 @@
 /*---------------------------------------------------------------------------*/
 #include "contiki.h"
 
-#define LORA_MAX_PAYLOAD_SIZE			255		// Max payload size in bytes
-#define TX_TIMEOUT_VALUE				3000000		// us
+#define LORA_MAX_PAYLOAD_SIZE			128		// Max payload size in bytes
+#define TX_TIMEOUT_VALUE				4000000		// us
 #define TX_TIMEOUT_VALUE_SEC		(TX_TIMEOUT_VALUE/1000000)*CLOCK_SECOND
 
 #define CCA_THRESHOLD					-120.0		// Clear-Channel Assessment Threshold (dBm)
@@ -54,10 +54,10 @@
 #define LORA_PREAMBLE_LENGTH           	8     	// Same for Tx and Rx
 #define LORA_FIX_LENGTH_PAYLOAD_ON     	false
 #define LORA_CRC_ON                     true
-#define LORA_FREQ_HOP    				        false
+#define LORA_FREQ_HOP    				        0
 #define LORA_FREQ_HOP_PERIOD			      0
 #define LORA_IQ_INVERSION_ON           	false
-#define LORA_SYMBOL_TIMEOUT            	3000      	// Symbols    (3000)
+#define LORA_SYMBOL_TIMEOUT            	5      	// Symbols    (3000)
 #define LORA_AFC_BANDWIDTH              0    	//Hz
 #define LORA_PAYLOAD_LENGTH             0
 // #define LORA_RX_CONTINUOUS				true

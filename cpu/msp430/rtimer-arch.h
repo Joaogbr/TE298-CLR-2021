@@ -41,6 +41,7 @@
 #define RTIMER_ARCH_H_
 
 #include "sys/rtimer.h"
+#include <stdbool.h>
 
 #ifdef RTIMER_CONF_SECOND
 #define RTIMER_ARCH_SECOND RTIMER_CONF_SECOND
@@ -63,5 +64,9 @@
 #define RTIMERTICKS_TO_US_64(T)  ((uint32_t)(((uint64_t)(T) * 1000000 + ((RTIMER_ARCH_SECOND) / 2)) / (RTIMER_ARCH_SECOND)))
 
 rtimer_clock_t rtimer_arch_now(void);
+
+void rtimer_arch_sleep(rtimer_clock_t howlong);
+
+int rtimer_arch_sleep_until(rtimer_clock_t howlong, bool *cond_var);
 
 #endif /* RTIMER_ARCH_H_ */

@@ -7,7 +7,7 @@
 #define XTAL_FREQ                                   32000000
 #define FREQ_STEP                                   61.03515625
 
-#define RX_BUFFER_SIZE                              256
+#define RX_BUFFER_SIZE                              128
 
 #define RSSI_OFFSET_LF                              -164
 #define RSSI_OFFSET_HF                              -157

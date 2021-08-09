@@ -66,7 +66,7 @@
 /*---------------------------------------------------------------------------*/
 //#define CLEAR_TXBUF()           (buffer = 0)
 /*---------------------------------------------------------------------------*/
-static struct etimer rx_timer;
+static struct etimer tx_timer;
 #define BUFFER_SIZE   64 // Define the payload size here
 uint8_t buffer[BUFFER_SIZE];
 /*---------------------------------------------------------------------------*/
@@ -84,19 +84,19 @@ void SendPing() {
 }
 
 /*---------------------------------------------------------------------------*/
-PROCESS(rx_process, "TX process");
-AUTOSTART_PROCESSES(&rx_process);
+PROCESS(tx_process, "TX process");
+AUTOSTART_PROCESSES(&tx_process);
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(rx_process, ev, data)
+PROCESS_THREAD(tx_process, ev, data)
 {
   PROCESS_BEGIN();
-  PRINTF("Process has begun\n");
+  PRINTF("Tx process has begun\n");
 
 	//sx1276_driver.init();
 	// Start infinite RX
 	//sx1276_driver.on();
 
-	etimer_set(&rx_timer, 2*CLOCK_SECOND);
+	etimer_set(&tx_timer, 3*CLOCK_SECOND);
   while( 1 )
   {
     PROCESS_WAIT_EVENT();
@@ -107,7 +107,7 @@ PROCESS_THREAD(rx_process, ev, data)
     	PRINTF("Sent the PING\n");
     	LEDS_OFF(LEDS_ALL);
 
-		etimer_reset(&rx_timer);
+		etimer_reset(&tx_timer);
     }
   }
   PROCESS_END();

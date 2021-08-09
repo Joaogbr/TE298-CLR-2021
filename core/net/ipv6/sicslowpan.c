@@ -1636,6 +1636,105 @@ input(void)
       return;
   }
 
+  //PRINTF("Proto field: %d\n", UIP_IP_BUF->proto);
+
+#if (NETSTACK_CONF_WITH_IPV6 && UIP_CONF_IPV6_RPL)
+#if (IS_LT_7 || IS_LT_6)
+  uint8_t ipaddr_src = UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1];
+  uint8_t hop_limit, hop_count;
+
+  hop_limit = UIP_IP_BUF->ttl;
+  if(hop_limit > 64){
+    hop_limit = 255;
+  } else if((hop_limit <= 64) && (hop_limit > 1)){
+    hop_limit = 64;
+  } else{
+    hop_limit = 1;
+  }
+  PRINTF("TTL: %d, hop limit: %d\n", UIP_IP_BUF->ttl, hop_limit);
+  hop_count = (hop_limit + 1) - UIP_IP_BUF->ttl;
+#endif
+#if IS_LT_7
+#if (NODE_ID == 0x01)
+	if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x02) || (ipaddr_src == 0x03)) && (hop_count == 1)) &&
+    !(((ipaddr_src == 0x04) || (ipaddr_src == 0x05)) && (hop_count == 2))) {
+		PRINTF("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+		return;
+	}
+#elif (NODE_ID == 0x02)
+  /*uint8_t ipaddr_dst = UIP_IP_BUF->destipaddr.u8[sizeof(UIP_IP_BUF->destipaddr.u8) - 1];
+  if(ipaddr_dst != 0x02){
+    printf("Invalid option, node 2 is a leaf node\n");
+		return;
+  }*/
+	if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x02)) && (hop_count == 1))) {
+		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+		return;
+	}
+#elif (NODE_ID == 0x03)
+	if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x03) || (ipaddr_src == 0x04) ||
+    (ipaddr_src == 0x05)) && (hop_count == 1))){
+		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+		return;
+	}
+#elif (NODE_ID == 0x04)
+  /*uint8_t ipaddr_dst = UIP_IP_BUF->destipaddr.u8[sizeof(UIP_IP_BUF->destipaddr.u8) - 1];
+  if(ipaddr_dst != 0x04){
+    printf("Invalid option, node 4 is a leaf node\n");
+    return;
+  }*/
+	if(!(((ipaddr_src == 0x03) || (ipaddr_src == 0x04)) && (hop_count == 1)) &&
+    !((ipaddr_src == 0x01) && (hop_count == 2))) {
+		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+		return;
+	}
+#elif (NODE_ID == 0x05)
+  /*uint8_t ipaddr_dst = UIP_IP_BUF->destipaddr.u8[sizeof(UIP_IP_BUF->destipaddr.u8) - 1];
+  if(ipaddr_dst != 0x05){
+    printf("Invalid option, node 5 is a leaf node\n");
+    return;
+  }*/
+	if(!(((ipaddr_src == 0x03) || (ipaddr_src == 0x05)) && (hop_count == 1)) &&
+    !((ipaddr_src == 0x01) && (hop_count == 2))) {
+		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+		return;
+	}
+#endif
+
+#elif IS_LT_6
+#if (NODE_ID == 0x01)
+  if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x02)) && (hop_count == 1)) && !((ipaddr_src == 0x03) && (hop_count == 2)) &&
+    !((ipaddr_src == 0x04) && (hop_count == 3)) && !((ipaddr_src == 0x05) && (hop_count == 4))) {
+    PRINTF("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+    return;
+  }
+#elif (NODE_ID == 0x02)
+  if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x02) || (ipaddr_src == 0x03)) && (hop_count == 1)) &&
+    !((ipaddr_src == 0x04) && (hop_count == 2)) && !((ipaddr_src == 0x05) && (hop_count == 3))) {
+    printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+    return;
+  }
+#elif (NODE_ID == 0x03)
+  if(!(((ipaddr_src == 0x02) || (ipaddr_src == 0x03) || (ipaddr_src == 0x04)) && (hop_count == 1)) &&
+    !(((ipaddr_src == 0x01) || (ipaddr_src == 0x05)) && (hop_count == 2))) {
+    printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+    return;
+  }
+#elif (NODE_ID == 0x04)
+  if(!(((ipaddr_src == 0x03) || (ipaddr_src == 0x04) || (ipaddr_src == 0x05)) && (hop_count == 1)) &&
+    !((ipaddr_src == 0x02) && (hop_count == 2)) && !((ipaddr_src == 0x01) && (hop_count == 3))) {
+    printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+    return;
+  }
+#elif (NODE_ID == 0x05)
+  if(!(((ipaddr_src == 0x04) || (ipaddr_src == 0x05)) && (hop_count == 1)) && !((ipaddr_src == 0x03) && (hop_count == 2)) &&
+    !((ipaddr_src == 0x02) && (hop_count == 3)) && !((ipaddr_src == 0x01) && (hop_count == 4))) {
+    printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+    return;
+  }
+#endif
+#endif
+#endif
 
 #if SICSLOWPAN_CONF_FRAG
  copypayload:
@@ -1710,7 +1809,7 @@ input(void)
 #if DEBUG
     {
       uint16_t ndx;
-      PRINTF("after decompression %u:", UIP_IP_BUF->len[1]);
+      PRINTF("after decompression (%u):", UIP_IP_BUF->len[1]);
       for (ndx = 0; ndx < UIP_IP_BUF->len[1] + 40; ndx++) {
         uint8_t data = ((uint8_t *) (UIP_IP_BUF))[ndx];
         PRINTF("%02x", data);
@@ -1803,4 +1902,3 @@ const struct network_driver sicslowpan_driver = {
 };
 /*--------------------------------------------------------------------*/
 /** @} */
-

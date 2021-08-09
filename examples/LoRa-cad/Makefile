@@ -2,7 +2,7 @@ ifndef TARGET
 TARGET=expfr5969
 endif
 
-CONTIKI_PROJECT = CAD CAD.hex
+CONTIKI_PROJECT = cad cad.hex
 
 all: $(CONTIKI_PROJECT)
 CONTIKI = ../..

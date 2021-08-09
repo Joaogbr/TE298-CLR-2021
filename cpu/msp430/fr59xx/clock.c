@@ -175,6 +175,8 @@ clock_init(void)
 #error NEED TO UPDATE clock.c to match interval!
 #endif
 
+  TA0CTL = TASSEL0 | TACLR | ID_1; // 16384 Hz
+
   /* Initialize ccr1 to create the X ms interval. */
   /* CCR1 interrupt enabled, interrupt occurs when timer equals CCR. */
   TA1CCTL1 = CCIE;
@@ -182,7 +184,7 @@ clock_init(void)
   /* Interrupt after X ms. */
   TA1CCR1 = INTERVAL;
 
-  /* Start Timer_A in continuous mode. */
+  /* Start Timer1_A in continuous mode. */
   TA1CTL |= MC1;
 
   count = 0;

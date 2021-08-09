@@ -32,7 +32,7 @@
 /**
  * \file
  *         fram.c
- * \Contiki port, author 
+ * \Contiki port, author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  * \Adopted from:
  *         Andrea Gaglione <and.gaglione@gmail.com>
@@ -64,7 +64,19 @@
 #define PRINTF(...)
 #define PRINTDEBUG(...)
 #endif
+/*---------------------------------------------------------------------------*/
+void
+fram_init(){
+  MPUCTL0 = MPUPW;     // Write PWD to access MPU register
 
+  MPUSEGB1 = 0x0640; // Region boundary for .bss section shifted right 4x
+
+  MPUSEGB2 = 0x0640; // Region boundary for .bss section shifted right 4x
+
+  MPUSAM = (MPUSEG1WE | MPUSEG1RE | MPUSEG2RE | MPUSEG2XE | MPUSEG3RE | MPUSEG3XE); // Seg1 is rw only, seg2 and seg3 are rx only
+
+  MPUCTL0 |= MPUPW | MPUENA | MPUSEGIE;   // Enable MPU protection and lock until BOR
+}
 /*---------------------------------------------------------------------------*/
 uint8_t
 fram_write(uint32_t *writeAddress, const void *writeData)

@@ -49,6 +49,7 @@
 #define FRAM_ERROR                 (-1)
 #define FRAM_SUCCESS               0x00
 
+void fram_init(void);
 uint8_t fram_write(uint32_t *writeAddress, const void *writeData);
 uint8_t fram_read(uint32_t *readAddress, const void *readData);
 uint8_t fram_clear(uint32_t *startAddress, uint32_t *endAddress);

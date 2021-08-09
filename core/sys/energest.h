@@ -42,6 +42,22 @@
 
 #include "sys/rtimer.h"
 
+#ifndef ENERGEST_SECOND
+#ifdef ENERGEST_CONF_SECOND
+#define ENERGEST_SECOND ENERGEST_CONF_SECOND
+#else /* ENERGEST_CONF_SECOND */
+#define ENERGEST_SECOND RTIMER_SECOND
+#endif /* ENERGEST_CONF_SECOND */
+#endif /* ENERGEST_SECOND */
+
+#ifndef ENERGEST_GET_TOTAL_TIME
+#ifdef ENERGEST_CONF_GET_TOTAL_TIME
+#define ENERGEST_GET_TOTAL_TIME ENERGEST_CONF_GET_TOTAL_TIME
+#else /* ENERGEST_CONF_GET_TOTAL_TIME */
+#define ENERGEST_GET_TOTAL_TIME energest_get_total_time
+#endif /* ENERGEST_CONF_GET_TOTAL_TIME */
+#endif /* ENERGEST_GET_TOTAL_TIME */
+
 typedef struct {
   /*  unsigned long cumulative[2];*/
   unsigned long current;
@@ -64,6 +80,10 @@ enum energest_type {
 
   ENERGEST_TYPE_SERIAL,
 
+#ifdef ENERGEST_CONF_PLATFORM_ADDITIONS
+  ENERGEST_CONF_PLATFORM_ADDITIONS,
+#endif /* ENERGEST_CONF_PLATFORM_ADDITIONS */
+
   ENERGEST_TYPE_MAX
 };
 
@@ -74,6 +94,7 @@ unsigned long energest_leveldevice_leveltime(int powerlevel);
 #endif
 void energest_type_set(int type, unsigned long value);
 void energest_flush(void);
+uint64_t ENERGEST_GET_TOTAL_TIME(void);
 
 #if ENERGEST_CONF_ON
 /*extern int energest_total_count;*/

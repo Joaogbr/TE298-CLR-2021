@@ -294,10 +294,16 @@ queuebuf_init(void)
     qbuf_renew_file(i);
   }
 #endif
+
+#if QUEUEBUF_CONF_FRAM
+  memb_fram_init(&buframmem, (QUEUEBUF_CONF_FRAM_ADDR + QUEUEBUF_NUM * sizeof(struct queuebuf)));
+  memb_fram_init(&bufmem, QUEUEBUF_CONF_FRAM_ADDR);
+#else
   memb_init(&buframmem);
   memb_init(&bufmem);
+#endif
 
-#if QUEUEBUF_DEBUG
+#if QUEUEBUF_DEBUG && QUEUEBUF_CONF_FRAM
   void *pt;
 
   printf("QUEUEBUF_CONF_FRAM_ADDR 0x%x\n", QUEUEBUF_CONF_FRAM_ADDR);

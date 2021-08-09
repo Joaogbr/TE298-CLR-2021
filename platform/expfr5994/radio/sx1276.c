@@ -39,6 +39,7 @@
 #include "sx1276.h"
 #include "sx1276Regs-Fsk.h"
 #include "sx1276Regs-LoRa.h"
+#include "sx1276-config.h"
 #include "spi.h"
 #include "isr_compat.h"
 #include "sys/clock.h"
@@ -49,7 +50,7 @@
 #include <stdbool.h>
 
 /*---------------------------------------------------------------------------*/
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -111,7 +112,7 @@ const radio_registers_t radio_registers[] = {
     { MODEM_FSK , REG_IMAGECAL           , 0x02 },
     { MODEM_FSK , REG_DIOMAPPING1        , 0x00 },
     { MODEM_FSK , REG_DIOMAPPING2        , 0x30 },
-    { MODEM_LORA, REG_LR_PAYLOADMAXLENGTH, 0x40 },
+    { MODEM_LORA, REG_LR_PAYLOADMAXLENGTH, LORA_MAX_PAYLOAD_SIZE },
 };
 
 typedef struct {
@@ -190,7 +191,6 @@ void sx1276_init(RadioEvents_t *events) {
   sx1276_rxchain_calibration();
 
   sx1276_set_opmode(RF_OPMODE_SLEEP);
-  sx1276.Settings.State = RF_IDLE;
   delay_ms(1);
 
   eint(); // __enable_interrupt();
@@ -205,7 +205,7 @@ void sx1276_init(RadioEvents_t *events) {
 
   sx1276_set_modem(MODEM_FSK);
 
-  sx1276_set_public_network(false);
+  //sx1276_set_public_network(false);
 
   sx1276.Settings.State = RF_IDLE;
 }
@@ -745,7 +745,7 @@ uint32_t sx1276_get_timeonair(radio_modem_t modem, uint8_t pktLen) {
 void sx1276_send(uint8_t *buffer, uint8_t size) {
   uint32_t txTimeout = 0;
 
-  DISABLE_DIO0_IT;
+  ENABLE_DIO0_IT;
 
   switch( sx1276.Settings.Modem )
   {
@@ -846,6 +846,9 @@ void sx1276_send(uint8_t *buffer, uint8_t size) {
   }
 
   sx1276_set_tx(txTimeout); // Start the transmitter
+  //sx1276_set_opmode(RF_OPMODE_STANDBY);
+  //delay_us(220);
+  //sx1276_read(REG_OPMODE);
 }
 
 void sx1276_set_sleep(void)
@@ -858,7 +861,7 @@ void sx1276_set_sleep(void)
   DISABLE_DIO3_IT;
   sx1276_set_opmode(RF_OPMODE_SLEEP);
   sx1276.Settings.State = RF_IDLE;
-  delay_us(250);
+  delay_us(100);
 }
 
 void sx1276_set_stby(void)
@@ -869,7 +872,8 @@ void sx1276_set_stby(void)
 
     sx1276_set_opmode(RF_OPMODE_STANDBY);
     sx1276.Settings.State = RF_IDLE;
-    delay_us(250);
+    delay_us(220);
+    //sx1276_read(REG_OPMODE);
 }
 
 void sx1276_disable_sync_word(void)
@@ -1051,14 +1055,20 @@ void sx1276_set_rx(uint32_t timeout) {
       ENABLE_DIO0_IT;
       sx1276_set_opmode(RFLR_OPMODE_RECEIVER);
       sx1276.Settings.State = RF_RX_RUNNING;
-      delay_us(400);
+      delay_us(135);
+      //sx1276_set_opmode(RFLR_OPMODE_RECEIVER);
+      //delay_us(135);
+      //sx1276_read(REG_OPMODE);
     }
     else
     {
       ENABLE_DIO0_IT;
       sx1276_set_opmode(RFLR_OPMODE_RECEIVER_SINGLE);
       sx1276.Settings.State = RF_RX_RUNNING;
-      delay_us(400);
+      delay_us(135);
+      //sx1276_set_opmode(RF_OPMODE_STANDBY);
+      //delay_us(220);
+      //sx1276_read(REG_OPMODE);
     }
   }
 }
@@ -1142,7 +1152,7 @@ void sx1276_set_tx(uint32_t timeout) {
   sx1276.Settings.State = RF_TX_RUNNING;
   ctimer_set(&TxTimeoutTimer, timeout, sx1276_on_timeout_irq, NULL);
   sx1276_set_opmode(RF_OPMODE_TRANSMITTER);
-  delay_us(500);
+  delay_us(230);
 }
 
 void sx1276_start_cad( void )
@@ -1168,16 +1178,20 @@ void sx1276_start_cad( void )
                                         );
 
             // DIO0=CADDone
-            //sx1276_write( REG_DIOMAPPING1, ( sx1276_read( REG_DIOMAPPING1 ) & RFLR_DIOMAPPING1_DIO0_MASK ) | RFLR_DIOMAPPING1_DIO0_10 );
+            sx1276_write( REG_DIOMAPPING1, ( sx1276_read( REG_DIOMAPPING1 ) & RFLR_DIOMAPPING1_DIO0_MASK ) | RFLR_DIOMAPPING1_DIO0_10 );
 
             // DIO3=CADDone
-            sx1276_write( REG_DIOMAPPING1, ( sx1276_read( REG_DIOMAPPING1 ) & RFLR_DIOMAPPING1_DIO3_MASK ) | RFLR_DIOMAPPING1_DIO3_00 );
+            //sx1276_write( REG_DIOMAPPING1, ( sx1276_read( REG_DIOMAPPING1 ) & RFLR_DIOMAPPING1_DIO3_MASK ) | RFLR_DIOMAPPING1_DIO3_00 );
 
-            DISABLE_DIO0_IT;
-            ENABLE_DIO3_IT;
+            //DISABLE_DIO0_IT;
+            //ENABLE_DIO3_IT;
+            ENABLE_DIO0_IT;
             sx1276.Settings.State = RF_CAD;
             sx1276_set_opmode( RFLR_OPMODE_CAD );
-            delay_us(150);
+            delay_us(130);
+            //sx1276_set_opmode(RF_OPMODE_STANDBY);
+            //delay_us(220);
+            //sx1276_read(REG_OPMODE);
         }
         break;
     default:
@@ -1229,6 +1243,7 @@ void sx1276_set_modem(radio_modem_t modem) {
 
 void sx1276_set_opmode(uint8_t opmode) {
   sx1276_write(REG_OPMODE, (sx1276_read(REG_OPMODE) & RF_OPMODE_MASK) | opmode);
+  sx1276_read(REG_OPMODE);
 }
 
 void sx1276_write(uint8_t addr, uint8_t data) {
@@ -1281,12 +1296,12 @@ void sx1276_read_buffer(uint8_t addr, uint8_t *data, uint8_t len) {
 }
 
 void sx1276_read_fifo(uint8_t *data, uint8_t len) {
-  PRINTF("PKT read has started\n");
+  //PRINTF("PKT read has started\n");
   sx1276_read_buffer(0, data, len);
-  PRINTF("PKT read has ended\n");
+  //PRINTF("PKT read has ended\n");
 }
 
-void sx1276_set_public_network(bool enable)
+/*void sx1276_set_public_network(bool enable)
 {
     sx1276_set_modem(MODEM_LORA);
     sx1276.Settings.LoRa.PublicNetwork = enable;
@@ -1300,7 +1315,7 @@ void sx1276_set_public_network(bool enable)
         // Change LoRa modem SyncWord
         sx1276_write(REG_LR_SYNCWORD, LORA_MAC_PRIVATE_SYNCWORD);
     }
-}
+}*/
 
 static uint8_t sx1276_get_paselect(uint32_t channel) {
   if(channel < RF_MID_BAND_THRESH )
@@ -1392,7 +1407,7 @@ static void sx1276_on_timeout_irq(void* context)
     sx1276_set_modem(MODEM_FSK);
 
     // Restore previous network type setting.
-    sx1276_set_public_network(sx1276.Settings.LoRa.PublicNetwork);
+    //sx1276_set_public_network(sx1276.Settings.LoRa.PublicNetwork);
     // END WORKAROUND
 
     sx1276.Settings.State = RF_IDLE;
@@ -1604,6 +1619,7 @@ void sx1276_on_dio0irq() {
             case MODEM_OOK:
             break;
             case MODEM_LORA:
+            sx1276.Settings.State = RF_IDLE;
             if((sx1276_read(REG_LR_IRQFLAGS) & RFLR_IRQFLAGS_CADDETECTED) == RFLR_IRQFLAGS_CADDETECTED)
             {
               // Clear Irq
@@ -1631,7 +1647,7 @@ void sx1276_on_dio0irq() {
   }
 }
 
-void sx1276_on_dio3irq()
+/*void sx1276_on_dio3irq()
 {
   switch(sx1276.Settings.Modem)
   {
@@ -1639,6 +1655,7 @@ void sx1276_on_dio3irq()
   case MODEM_OOK:
       break;
   case MODEM_LORA:
+      sx1276.Settings.State = RF_IDLE;
       if((sx1276_read(REG_LR_IRQFLAGS) & RFLR_IRQFLAGS_CADDETECTED) == RFLR_IRQFLAGS_CADDETECTED)
       {
           // Clear Irq
@@ -1661,7 +1678,7 @@ void sx1276_on_dio3irq()
   default:
       break;
   }
-}
+}*/
 
 
 #pragma vector=PORT4_VECTOR
@@ -1679,7 +1696,7 @@ __interrupt void port4_interrupt_handler(void)
     ENERGEST_OFF(ENERGEST_TYPE_IRQ);
 }
 
-#pragma vector=PORT6_VECTOR
+/*#pragma vector=PORT6_VECTOR
 __interrupt void port6_interrupt_handler(void)
 {
     ENERGEST_ON(ENERGEST_TYPE_IRQ);
@@ -1692,4 +1709,4 @@ __interrupt void port6_interrupt_handler(void)
     // Reset the interrupt flag
     P6IFG &= ~BIT3;
     ENERGEST_OFF(ENERGEST_TYPE_IRQ);
-}
+}*/

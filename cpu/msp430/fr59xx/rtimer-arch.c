@@ -47,7 +47,7 @@
 #include "dev/watchdog.h"
 #include "isr_compat.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #define PRINTF(...) printf(__VA_ARGS__)
@@ -55,8 +55,10 @@
 #define PRINTF(...)
 #endif
 
+static volatile uint8_t timeout = 0;
+
 /*---------------------------------------------------------------------------*/
-ISR(TIMER1_A0, timera0)
+ISR(TIMER1_A0, timer1a0)
 {
   ENERGEST_ON(ENERGEST_TYPE_IRQ);
 
@@ -73,6 +75,17 @@ ISR(TIMER1_A0, timera0)
   ENERGEST_OFF(ENERGEST_TYPE_IRQ);
 }
 /*---------------------------------------------------------------------------*/
+ISR(TIMER0_A0, timer0a0)
+{
+  ENERGEST_ON(ENERGEST_TYPE_IRQ);
+
+  LPM4_EXIT;
+
+  timeout = 1;
+
+  ENERGEST_OFF(ENERGEST_TYPE_IRQ);
+}
+/*---------------------------------------------------------------------------*/
 void
 rtimer_arch_init(void)
 {
@@ -80,7 +93,7 @@ rtimer_arch_init(void)
 
   /* CCR0 interrupt enabled, interrupt occurs when timer equals CCR0. */
   TA1CCTL0 = CCIE;
-
+  TA0CCTL0 = CCIE;
   /* Enable interrupts. */
   eint();
 }
@@ -102,5 +115,72 @@ rtimer_arch_schedule(rtimer_clock_t t)
   PRINTF("rtimer_arch_schedule time %u\n", t);
 
   TA1CCR0 = t;
+}
+/*---------------------------------------------------------------------------*/
+void
+rtimer_arch_sleep(rtimer_clock_t howlong)
+{
+#if RTIMER_ARCH_SECOND == 32768
+  howlong = (howlong/2); // Timer A0 has 16384 Hz, so cut wait period in half
+#endif
+
+  TA0CCR0 = howlong;
+  timeout = 0;
+
+  watchdog_stop();
+
+  ENERGEST_SWITCH(ENERGEST_TYPE_CPU, ENERGEST_TYPE_LPM);
+
+  /* Start Timer0_A in up mode. */
+  TA0CTL |= MC_1;
+
+  _BIS_SR(GIE | LPM4_bits);
+	while(timeout == 0);
+
+  /* Stop Timer0_A. */
+  TA0CTL &= ~MC;
+
+  ENERGEST_SWITCH(ENERGEST_TYPE_LPM, ENERGEST_TYPE_CPU);
+
+  /* Clear Timer0_A */
+  TA0CTL |= TACLR;
+
+  watchdog_start();
+}
+/*---------------------------------------------------------------------------*/
+int
+rtimer_arch_sleep_until(rtimer_clock_t howlong, bool *cond_var)
+{
+  TA0CCR0 = howlong;
+  timeout = 0;
+
+  watchdog_stop();
+
+  ENERGEST_SWITCH(ENERGEST_TYPE_CPU, ENERGEST_TYPE_LPM);
+
+  /* Start Timer0_A in up mode. */
+  TA0CTL |= MC_1;
+
+  _BIS_SR(GIE | LPM4_bits);
+  while((*cond_var == false) && (timeout == 0)){
+    _NOP();
+  }
+
+  /* Stop Timer0_A. */
+  TA0CTL &= ~MC;
+
+  ENERGEST_SWITCH(ENERGEST_TYPE_LPM, ENERGEST_TYPE_CPU);
+
+  /* Clear Timer0_A */
+  TA0CTL |= TACLR;
+
+  watchdog_start();
+
+  if(timeout == 1){
+    PRINTF("Rtimer arch timeout\n");
+    return 0;
+  }
+
+  return 1;
 }
 /*---------------------------------------------------------------------------*/

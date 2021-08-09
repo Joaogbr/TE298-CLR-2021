@@ -113,9 +113,21 @@ energest_flush(void)
   }
 }
 /*---------------------------------------------------------------------------*/
+uint64_t
+energest_get_total_time(void)
+{
+  return energest_type_time(ENERGEST_TYPE_CPU) +
+    energest_type_time(ENERGEST_TYPE_LPM);
+}
+/*---------------------------------------------------------------------------*/
 #else /* ENERGEST_CONF_ON */
 void energest_type_set(int type, unsigned long val) {}
 void energest_init(void) {}
 unsigned long energest_type_time(int type) { return 0; }
 void energest_flush(void) {}
+uint64_t
+energest_get_total_time(void)
+{
+  return 0;
+}
 #endif /* ENERGEST_CONF_ON */

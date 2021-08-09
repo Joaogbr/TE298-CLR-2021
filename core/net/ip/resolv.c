@@ -761,7 +761,7 @@ check_entries(void)
         uip_udp_packet_sendto(resolv_conn, uip_appdata,
                               (query - (uint8_t *) uip_appdata),
                               (const uip_ipaddr_t *)
-                                uip_nameserver_get(namemapptr->server), 
+                                uip_nameserver_get(namemapptr->server),
                               UIP_HTONS(DNS_PORT));
 
         PRINTF("resolver: (i=%d) Sent DNS request for \"%s\".\n", i,
@@ -770,7 +770,7 @@ check_entries(void)
 #else /* RESOLV_CONF_SUPPORTS_MDNS */
       uip_udp_packet_sendto(resolv_conn, uip_appdata,
                             (query - (uint8_t *) uip_appdata),
-                            uip_nameserver_get(namemapptr->server), 
+                            uip_nameserver_get(namemapptr->server),
                             UIP_HTONS(DNS_PORT));
       PRINTF("resolver: (i=%d) Sent DNS request for \"%s\".\n", i,
              namemapptr->name);
@@ -1067,10 +1067,10 @@ newdata(void)
   /* Got to this point there's no answer, try next nameserver if available
      since this one doesn't know the answer */
 #if RESOLV_CONF_SUPPORTS_MDNS
-  if(nanswers == 0 && UIP_UDP_BUF->srcport != UIP_HTONS(MDNS_PORT) 
+  if(nanswers == 0 && UIP_UDP_BUF->srcport != UIP_HTONS(MDNS_PORT)
       && hdr->id != 0)
 #else
-  if(nanswers == 0) 
+  if(nanswers == 0)
 #endif
   {
     if(try_next_server(namemapptr)) {
@@ -1276,7 +1276,7 @@ resolv_query(const char *name)
   register struct namemap *nameptr = 0;
 
   init();
-  
+
   lseq = lseqi = 0;
 
   /* Remove trailing dots, if present. */

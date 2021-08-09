@@ -54,7 +54,7 @@
 
 #include <string.h>
 
-#define DEBUG DEBUG_NONE
+#define DEBUG DEBUG_PRINT
 #include "net/ip/uip-debug.h"
 
 #if UIP_LOGGING
@@ -694,7 +694,7 @@ tcpip_ipv6_output(void)
 #else /* UIP_ND6_SEND_NS */
       PRINTF("tcpip_ipv6_output: neighbor not in cache\n");
       uip_len = 0;
-      return;  
+      return;
 #endif /* UIP_ND6_SEND_NS */
     } else {
 #if UIP_ND6_SEND_NS

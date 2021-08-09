@@ -41,7 +41,6 @@
 #include "sx1276.h"
 #include "sx1276-arch.h"
 #include "spi.h"
-#include "dev/button-sensor.h"
 /*---------------------------------------------------------------------------*/
 #define LEDS_DEBUG 1
 #if LEDS_DEBUG
@@ -82,13 +81,13 @@ void MsgInfo(){
   PRINTF("\n");
 }
 /*---------------------------------------------------------------------------*/
-PROCESS(rx_process, "rx process");
+PROCESS(rx_process, "Rx process");
 AUTOSTART_PROCESSES(&rx_process);
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(rx_process, ev, data)
 {
   PROCESS_BEGIN();
-  PRINTF("Process has begun\n");
+  PRINTF("Rx process has begun\n");
 
   //sx1276_driver.init();
   //sx1276_driver.on();

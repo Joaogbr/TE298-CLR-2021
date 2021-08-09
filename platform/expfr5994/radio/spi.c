@@ -97,7 +97,7 @@ void spi_init(void)
   UCB1CTLW0 |= UCSSEL_2;             // SMCLK
   UCB1CTLW0 |= UCMST | UCSYNC | UCCKPL | UCMSB; // MSB-first 8-bit, Master, Synchronous, 3 pin SPI master, no ste, watch-out for clock-phase UCCKPH
 
-  UCB1BR0 = 0x02;
+  UCB1BR0 = 0x00;
   UCB1BR1 = 0x00;
 
   UCB1CTLW0 &= ~UCSWRST;  // Initializing USCI and Remove RESET before enabling interrupts

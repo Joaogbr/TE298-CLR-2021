@@ -30,27 +30,30 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+#define IS_LT_7          1
+#define IS_LT_6          0
+
 #ifndef WITH_NON_STORING
 #define WITH_NON_STORING 0 /* Set this to run with non-storing mode */
 #endif /* WITH_NON_STORING */
 
-#undef NBR_TABLE_CONF_MAX_NEIGHBORS
-#undef UIP_CONF_MAX_ROUTES
+//#undef NBR_TABLE_CONF_MAX_NEIGHBORS
+//#undef UIP_CONF_MAX_ROUTES
 
-#ifdef TEST_MORE_ROUTES
-/* configure number of neighbors and routes */
+/*#ifdef TEST_MORE_ROUTES
+// configure number of neighbors and routes
 #define NBR_TABLE_CONF_MAX_NEIGHBORS     10
 #define UIP_CONF_MAX_ROUTES   30
 #else
-/* configure number of neighbors and routes */
+// configure number of neighbors and routes
 #define NBR_TABLE_CONF_MAX_NEIGHBORS     10
 #define UIP_CONF_MAX_ROUTES   10
-#endif /* TEST_MORE_ROUTES */
+#endif // TEST_MORE_ROUTES*/
 
-#undef NETSTACK_CONF_RDC
+/*#undef NETSTACK_CONF_RDC
 #define NETSTACK_CONF_RDC     nullrdc_driver
 #undef NULLRDC_CONF_802154_AUTOACK
-#define NULLRDC_CONF_802154_AUTOACK       1
+#define NULLRDC_CONF_802154_AUTOACK       1*/
 
 /* Define as minutes */
 #define RPL_CONF_DEFAULT_LIFETIME_UNIT   60

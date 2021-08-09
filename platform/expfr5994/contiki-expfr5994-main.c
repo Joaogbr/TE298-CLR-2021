@@ -134,7 +134,7 @@ void uip_log(char *msg) { puts(msg); }
 #define NODE_ID 0x01
 #endif /* NODE_ID */
 static void
-set_rime_addr(void)
+set_lladdr(void)
 {
   linkaddr_t n_addr;
   int i;
@@ -143,16 +143,23 @@ set_rime_addr(void)
 
   //  Set node address
 #if NETSTACK_CONF_WITH_IPV6
-  n_addr.u8[7] = node_id & 0xff;
-  n_addr.u8[6] = node_id >> 8;
+  memcpy(n_addr.u8, node_mac, sizeof(n_addr.u8));
+  //n_addr.u8[7] = node_id & 0xff;
+  //n_addr.u8[6] = node_id >> 8;
 #else
-  n_addr.u8[0] = node_id & 0xff;
-  n_addr.u8[1] = node_id >> 8;
+  if(node_id == 0) {
+    for(i = 0; i < sizeof(linkaddr_t); ++i) {
+      n_addr.u8[i] = node_mac[7 - i];
+    }
+  } else {
+    n_addr.u8[0] = node_id & 0xff;
+    n_addr.u8[1] = node_id >> 8;
+  }
 #endif
 
   linkaddr_set_node_addr(&n_addr);
 
-  PRINTF("Rime started with address ");
+  PRINTF("Started with link layer address ");
   for(i = 0; i < sizeof(n_addr.u8) - 1; i++) {
     PRINTF("%d.", n_addr.u8[i]);
   }
@@ -214,9 +221,9 @@ main(int argc, char **argv)
   uart0_init(115200); /* Must come before first printf */
 #endif
 
-//#if NETSTACK_CONF_WITH_IPV4
-//  slip_arch_init(115200);
-//#endif /* NETSTACK_CONF_WITH_IPV4 */
+#if NETSTACK_CONF_WITH_IPV4
+  slip_arch_init(115200);
+#endif /* NETSTACK_CONF_WITH_IPV4 */
 
   clock_wait(2);
 
@@ -269,7 +276,7 @@ main(int argc, char **argv)
 #warning "***** CHANGING DEFAULT MAC *****"
   node_mac[0] = 0xDA; /* Hardcoded */
   node_mac[1] = 0x0A; /* Hardcoded for Revision A */
-  node_mac[3] = 0x00; /* Hardcoded to arbitrary even number so that
+  node_mac[2] = 0x00; /* Hardcoded to arbitrary even number so that
                          the 802.15.4 MAC address is compatible with
                          an Ethernet MAC address - byte 0 (byte 2 in
                          the DS ID) */
@@ -287,7 +294,7 @@ main(int argc, char **argv)
     memcpy(node_mac, ieee, sizeof(uip_lladdr.addr));
     node_mac[7] = node_id & 0xff;
   }
-#endif
+#endif /* IEEE_802154_MAC_ADDRESS */
 
   /*
    * Initialize Contiki and our processes.
@@ -300,7 +307,7 @@ main(int argc, char **argv)
 
   // printf("Starting " CONTIKI_VERSION_STRING "\n");
 
-  set_rime_addr();
+  set_lladdr();
   random_init(linkaddr_node_addr.u8[LINKADDR_SIZE-2] + linkaddr_node_addr.u8[LINKADDR_SIZE-1]);
 
   {
@@ -324,6 +331,7 @@ main(int argc, char **argv)
   }
 
 #if NETSTACK_CONF_WITH_IPV6
+  memcpy(&uip_lladdr.addr, node_mac, sizeof(uip_lladdr.addr));
 
   queuebuf_init();
 
@@ -355,7 +363,7 @@ main(int argc, char **argv)
   if(!UIP_CONF_IPV6_RPL) {
     uip_ipaddr_t ipaddr;
     int i;
-    uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0, 0, 0, 0);
+    uip_ip6addr(&ipaddr, UIP_DS6_DEFAULT_PREFIX, 0, 0, 0, 0, 0, 0, 0);
     uip_ds6_set_addr_iid(&ipaddr, &uip_lladdr);
     uip_ds6_addr_add(&ipaddr, 0, ADDR_TENTATIVE);
     PRINTF("Tentative global IPv6 address ");
@@ -388,6 +396,35 @@ main(int argc, char **argv)
   timesynch_set_authority_level((linkaddr_node_addr.u8[0] << 4) + 16);
 #endif /* TIMESYNCH_CONF_ENABLED */
 
+#if NETSTACK_CONF_WITH_IPV4
+  process_start(&tcpip_process, NULL);
+  process_start(&uip_fw_process, NULL); /* Start IP output */
+  process_start(&slip_process, NULL);
+
+  slip_set_input_callback(set_gateway);
+
+  {
+    uip_ipaddr_t hostaddr, netmask;
+
+    uip_init();
+
+    uip_ipaddr(&hostaddr, 172, 16,
+               linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1]);
+    uip_ipaddr(&netmask, 255, 255, 0, 0);
+    uip_ipaddr_copy(&meshif.ipaddr, &hostaddr);
+
+    uip_sethostaddr(&hostaddr);
+    uip_setnetmask(&netmask);
+    uip_over_mesh_set_net(&hostaddr, &netmask);
+    /*    uip_fw_register(&slipif);*/
+    uip_over_mesh_set_gateway_netif(&slipif);
+    uip_fw_default(&meshif);
+    uip_over_mesh_init(UIP_OVER_MESH_CHANNEL);
+    printf("uIP started with IP address %d.%d.%d.%d\n",
+           uip_ipaddr_to_quad(&hostaddr));
+  }
+#endif /* NETSTACK_CONF_WITH_IPV4 */
+
   energest_init();
   ENERGEST_ON(ENERGEST_TYPE_CPU);
 
@@ -417,8 +454,8 @@ main(int argc, char **argv)
      * Idle processing.
      */
     int s = splhigh();    /* Disable interrupts. */
-
-    if(process_nevents() != 0) {
+    /* uart0_active is for avoiding LPM3 when still sending or receiving */
+    if(process_nevents() != 0 || uart0_active()) {
       splx(s);                  /* Re-enable interrupts. */
     }
     else {

@@ -33,6 +33,8 @@
 #define PLATFORM_HAS_NTC     1
 #define PLATFORM_HAS_ACCEL   0
 
+#define IS_RADIO_LORA 1 // LoRa communications are being used
+
 #define FRAM_START_ADDR_CONF      0x04400
 #define FRAM_END_ADDR_CONF        0x063FF
 
@@ -42,7 +44,13 @@ typedef unsigned long clock_time_t;
 typedef unsigned long off_t;
 
 /* the low-level radio driver */
-#define NETSTACK_CONF_RADIO   sx1276_driver
+#define NETSTACK_CONF_RADIO     sx1276_driver
+
+//#define NETSTACK_CONF_RDC     	contikimac_driver
+
+//#define NETSTACK_CONF_MAC     	csma_driver
+
+//#define NETSTACK_CONF_FRAMER  	framer_802154
 
 #define CFS_CONF_OFFSET_TYPE    long
 

@@ -103,6 +103,28 @@
 #define NULLRDC_SEND_802154_ACK 0
 #endif /* NULLRDC_CONF_SEND_802154_ACK */
 
+#ifdef NULLRDC_CONF_CCA_COUNT_MAX_TX
+#define CCA_COUNT_MAX_TX                   (NULLRDC_CONF_CCA_COUNT_MAX_TX)
+#else
+#define CCA_COUNT_MAX_TX                   6
+#endif
+
+#ifdef NULLRDC_CONF_CCA_CHECK_TIME
+#define CCA_CHECK_TIME                     (NULLRDC_CONF_CCA_CHECK_TIME)
+#else
+#define CCA_CHECK_TIME                     RTIMER_ARCH_SECOND / 8192
+#endif
+
+#ifdef NULLRDC_CONF_CCA_SLEEP_TIME
+#define CCA_SLEEP_TIME NULLRDC_CONF_CCA_SLEEP_TIME
+#else
+#if RTIMER_ARCH_SECOND > 8000
+#define CCA_SLEEP_TIME                     RTIMER_ARCH_SECOND / 2000
+#else
+#define CCA_SLEEP_TIME                     (RTIMER_ARCH_SECOND / 2000) + 1
+#endif /* RTIMER_ARCH_SECOND > 8000 */
+#endif /* NULLRDC_CONF_CCA_SLEEP_TIME */
+
 #if NULLRDC_SEND_802154_ACK
 #include "net/mac/frame802154.h"
 #endif /* NULLRDC_SEND_802154_ACK */
@@ -210,20 +232,60 @@ send_one_packet(mac_callback_t sent, void *ptr)
 
 #else /* ! NULLRDC_802154_AUTOACK */
 
-    switch(NETSTACK_RADIO.send(packetbuf_hdrptr(), packetbuf_totlen())) {
-    case RADIO_TX_OK:
-      ret = MAC_TX_OK;
-      break;
-    case RADIO_TX_COLLISION:
-      ret = MAC_TX_COLLISION;
-      break;
-    case RADIO_TX_NOACK:
-      ret = MAC_TX_NOACK;
-      break;
-    default:
-      ret = MAC_TX_ERR;
-      break;
+#if IS_RADIO_LORA
+  /* Check if there are any transmissions by others. */
+  /* TODO: why does this give collisions before sending with the mc1322x? */
+  uint8_t collisions = 0;
+  rtimer_clock_t t0;
+  int i;
+  if(NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet()) {
+    PRINTF("csma-rdc: collision receiving/pending\n");
+    ret = MAC_TX_COLLISION;
+  } else
+  {
+    for(i = 0; i < CCA_COUNT_MAX_TX; ++i) {
+      PRINTF("Channel check before transmission\n");
+      t0 = RTIMER_NOW();
+      //on();
+#if CCA_CHECK_TIME > 0
+      while(RTIMER_CLOCK_LT(RTIMER_NOW(), t0 + CCA_CHECK_TIME)) { }
+#endif
+      if(NETSTACK_RADIO.channel_clear() == 0) {
+        collisions++;
+        //off();
+        break;
+      }
+      //off();
+      t0 = RTIMER_NOW();
+      while(RTIMER_CLOCK_LT(RTIMER_NOW(), t0 + CCA_SLEEP_TIME)) { }
     }
+
+    if(collisions > 0) {
+      //off();
+      PRINTF("csma-rdc: collision CCA\n");
+      //return MAC_TX_COLLISION;
+      ret = MAC_TX_COLLISION;
+    } else
+#endif /* IS_RADIO_LORA */
+    {
+      switch(NETSTACK_RADIO.send(packetbuf_hdrptr(), packetbuf_totlen())) {
+        case RADIO_TX_OK:
+          ret = MAC_TX_OK;
+          break;
+        case RADIO_TX_COLLISION:
+          ret = MAC_TX_COLLISION;
+          break;
+        case RADIO_TX_NOACK:
+          ret = MAC_TX_NOACK;
+          break;
+        default:
+          ret = MAC_TX_ERR;
+          break;
+        }
+    }
+#if IS_RADIO_LORA
+  }
+#endif
 
 #endif /* ! NULLRDC_802154_AUTOACK */
   }
@@ -276,7 +338,7 @@ packet_input(void)
 #if NULLRDC_802154_AUTOACK
   if(packetbuf_datalen() == ACK_LEN) {
     /* Ignore ack packets */
-    PRINTF("nullrdc: ignored ack\n"); 
+    PRINTF("nullrdc: ignored ack\n");
   } else
 #endif /* NULLRDC_802154_AUTOACK */
   if(NETSTACK_FRAMER.parse() < 0) {
@@ -346,7 +408,11 @@ off(int keep_radio_on)
 static unsigned short
 channel_check_interval(void)
 {
+#if IS_RADIO_LORA
+  return MAX(CLOCK_SECOND / 100, 1);
+#else
   return 0;
+#endif
 }
 /*---------------------------------------------------------------------------*/
 static void
