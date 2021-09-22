@@ -451,7 +451,7 @@ const struct radio_driver sx1276_driver =
   sx1276_radio_pending_packet,
   sx1276_radio_on,
   sx1276_radio_off,
-	//sx1276_radio_get_value,
+  //sx1276_radio_get_value,
   //sx1276_radio_set_value,
   //sx1276_radio_get_object,
   //sx1276_radio_set_object,
