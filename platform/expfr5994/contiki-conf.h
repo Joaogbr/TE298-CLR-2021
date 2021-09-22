@@ -6,11 +6,11 @@
 #include "platform-conf.h"
 
 #ifndef NETSTACK_CONF_MAC
-#define NETSTACK_CONF_MAC     	nullmac_driver
+#define NETSTACK_CONF_MAC       nullmac_driver
 #endif /* NETSTACK_CONF_MAC */
 
 #ifndef NETSTACK_CONF_RDC
-#define NETSTACK_CONF_RDC     	nullrdc_driver
+#define NETSTACK_CONF_RDC       nullrdc_driver
 #endif /* NETSTACK_CONF_RDC */
 
 #ifndef NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE
@@ -18,11 +18,11 @@
 #endif /* NETSTACK_CONF_RDC_CHANNEL_CHECK_RATE */
 
 #ifndef NETSTACK_CONF_RADIO
-#define NETSTACK_CONF_RADIO   	sx1276_driver
+#define NETSTACK_CONF_RADIO     sx1276_driver
 #endif /* NETSTACK_CONF_RADIO */
 
 #ifndef NETSTACK_CONF_FRAMER
-#define NETSTACK_CONF_FRAMER  	framer_nullmac //framer_802154
+#define NETSTACK_CONF_FRAMER    framer_nullmac //framer_802154
 #endif /* NETSTACK_CONF_FRAMER */
 
 #ifndef IS_RADIO_LORA
@@ -92,7 +92,7 @@
 #else /* NETSTACK_CONF_WITH_IPV6 */
 
 /* Network setup for non-IPv6 (rime). */
-#define NETSTACK_CONF_NETWORK 			rime_driver
+#define NETSTACK_CONF_NETWORK       rime_driver
 #define COLLECT_CONF_ANNOUNCEMENTS       1
 #define CXMAC_CONF_ANNOUNCEMENTS         0
 #define XMAC_CONF_ANNOUNCEMENTS          0
@@ -166,8 +166,8 @@
 #define UIP_CONF_MAX_ROUTES   4 //2
 #endif /* UIP_CONF_MAX_ROUTES */
 
-//#define UIP_CONF_ND6_SEND_RA		0
-//#define UIP_CONF_ND6_SEND_NA		0
+//#define UIP_CONF_ND6_SEND_RA    0
+//#define UIP_CONF_ND6_SEND_NA    0
 #define UIP_CONF_ND6_REACHABLE_TIME     600000
 #define UIP_CONF_ND6_RETRANS_TIMER      10000 //10000 (original),30000
 
@@ -180,7 +180,7 @@
 #define UIP_CONF_NETIF_MAX_ADDRESSES    3
 #define UIP_CONF_IP_FORWARD             0
 #ifndef UIP_CONF_BUFFER_SIZE
-#define UIP_CONF_BUFFER_SIZE		128
+#define UIP_CONF_BUFFER_SIZE    128
 #endif
 
 /* RPL config */

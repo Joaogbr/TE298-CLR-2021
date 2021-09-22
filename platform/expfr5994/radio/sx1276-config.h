@@ -10,23 +10,23 @@
 /*---------------------------------------------------------------------------*/
 #include "contiki.h"
 
-#define LORA_MAX_PAYLOAD_SIZE			128		// Max payload size in bytes
-#define TX_TIMEOUT_VALUE				4000000		// us
-#define TX_TIMEOUT_VALUE_SEC		(TX_TIMEOUT_VALUE/1000000)*CLOCK_SECOND
+#define LORA_MAX_PAYLOAD_SIZE      128    // Max payload size in bytes
+#define TX_TIMEOUT_VALUE        4000000    // us
+#define TX_TIMEOUT_VALUE_SEC    (TX_TIMEOUT_VALUE/1000000)*CLOCK_SECOND
 
-#define CCA_THRESHOLD					-120.0		// Clear-Channel Assessment Threshold (dBm)
-#define RX_TIMEOUT_VALUE				0		// us (0 = Continuously listening)
-//#define RX_TIMEOUT_VALUE				1000000		// us
-#define RX_TIMEOUT_VALUE_SEC		(RX_TIMEOUT_VALUE/1000000)*CLOCK_SECOND
+#define CCA_THRESHOLD          -120.0    // Clear-Channel Assessment Threshold (dBm)
+#define RX_TIMEOUT_VALUE        0    // us (0 = Continuously listening)
+//#define RX_TIMEOUT_VALUE        1000000    // us
+#define RX_TIMEOUT_VALUE_SEC    (RX_TIMEOUT_VALUE/1000000)*CLOCK_SECOND
 
-#define RX_CONTINUOUS_MODE			   	(RX_TIMEOUT_VALUE ? false : true)
+#define RX_CONTINUOUS_MODE           (RX_TIMEOUT_VALUE ? false : true)
 /*---------------------------------------------------------------------------*/
 // #define RF_FREQUENCY_AS        433000000         // Hz
 #define RF_FREQUENCY_EU        868000000         // Hz
 #define RF_FREQUENCY_US        915000000         // Hz
 #define RF_FREQUENCY_AU        921500000         // Hz
 
-#define RF_FREQUENCY				   	RF_FREQUENCY_US // Only choose pre-defined values
+#define RF_FREQUENCY             RF_FREQUENCY_US // Only choose pre-defined values
 
 #if RF_FREQUENCY == RF_FREQUENCY_EU
   #define RF_FREQUENCY_MIN     863000000         // Hz
@@ -39,28 +39,28 @@
   #define RF_FREQUENCY_MAX     928000000         // Hz
 #endif
 
-// #define FSK_FDEV                       	25e3      // Hz
-// #define FSK_DATARATE                   	50e3      // bps
-// #define FSK_BANDWIDTH                  	50e3      // Hz
-// #define FSK_AFC_BANDWIDTH              	83.333e3  // Hz
-// #define FSK_PREAMBLE_LENGTH            	5         // Same for Tx and Rx
-// #define FSK_FIX_LENGTH_PAYLOAD_ON      	false
+// #define FSK_FDEV                         25e3      // Hz
+// #define FSK_DATARATE                     50e3      // bps
+// #define FSK_BANDWIDTH                    50e3      // Hz
+// #define FSK_AFC_BANDWIDTH                83.333e3  // Hz
+// #define FSK_PREAMBLE_LENGTH              5         // Same for Tx and Rx
+// #define FSK_FIX_LENGTH_PAYLOAD_ON        false
 
-#define TX_OUTPUT_POWER					        5		// dBm
-#define LORA_FDEV 						          0
-#define LORA_BANDWIDTH                 	0      	// [0: 125 kHz, 1: 250 kHz, 2: 500 kHz, 3: Reserved]
-#define LORA_SPREADING_FACTOR          	7     	// [SF7..SF12]
-#define LORA_CODINGRATE                	1     	// [1: 4/5, 2: 4/6, 3: 4/7, 4: 4/8]
-#define LORA_PREAMBLE_LENGTH           	8     	// Same for Tx and Rx
-#define LORA_FIX_LENGTH_PAYLOAD_ON     	false
+#define TX_OUTPUT_POWER                 5    // dBm
+#define LORA_FDEV                       0
+#define LORA_BANDWIDTH                  0        // [0: 125 kHz, 1: 250 kHz, 2: 500 kHz, 3: Reserved]
+#define LORA_SPREADING_FACTOR           7       // [SF7..SF12]
+#define LORA_CODINGRATE                 1       // [1: 4/5, 2: 4/6, 3: 4/7, 4: 4/8]
+#define LORA_PREAMBLE_LENGTH            8       // Same for Tx and Rx
+#define LORA_FIX_LENGTH_PAYLOAD_ON      false
 #define LORA_CRC_ON                     true
-#define LORA_FREQ_HOP    				        0
-#define LORA_FREQ_HOP_PERIOD			      0
-#define LORA_IQ_INVERSION_ON           	false
-#define LORA_SYMBOL_TIMEOUT            	5      	// Symbols    (3000)
-#define LORA_AFC_BANDWIDTH              0    	//Hz
+#define LORA_FREQ_HOP                   0
+#define LORA_FREQ_HOP_PERIOD            0
+#define LORA_IQ_INVERSION_ON            false
+#define LORA_SYMBOL_TIMEOUT             5        // Symbols    (3000)
+#define LORA_AFC_BANDWIDTH              0      //Hz
 #define LORA_PAYLOAD_LENGTH             0
-// #define LORA_RX_CONTINUOUS				true
+// #define LORA_RX_CONTINUOUS        true
 
 #if LORA_BANDWIDTH == 2
   #define LORA_BANDWIDTH_HZ            500000

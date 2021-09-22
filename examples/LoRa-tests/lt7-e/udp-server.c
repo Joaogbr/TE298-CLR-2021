@@ -45,8 +45,8 @@
 
 #define UIP_IP_BUF   ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
 
-#define UDP_CLIENT_PORT  8765
-#define UDP_SERVER_PORT  5678
+#define UDP_CLIENT_PORT	8765
+#define UDP_SERVER_PORT	5678
 
 #define UDP_EXAMPLE_ID  190
 
@@ -91,7 +91,7 @@ print_local_addresses(void)
       PRINTF("\n");
       /* hack to make address "final" */
       if (state == ADDR_TENTATIVE) {
-  uip_ds6_if.addr_list[i].state = ADDR_PREFERRED;
+	uip_ds6_if.addr_list[i].state = ADDR_PREFERRED;
       }
     }
   }

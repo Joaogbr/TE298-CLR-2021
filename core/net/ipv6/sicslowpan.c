@@ -356,7 +356,7 @@ add_fragment(uint16_t tag, uint16_t frag_size, uint8_t offset)
     for(i = 0; i < SICSLOWPAN_REASS_CONTEXTS; i++) {
       /* clear all fragment info with expired timer to free all fragment buffers */
       if(frag_info[i].len > 0 && timer_expired(&frag_info[i].reass_timer)) {
-	clear_fragments(i);
+  clear_fragments(i);
       }
 
       /* We use len as indication on used or not used */
@@ -424,12 +424,12 @@ copy_frags2uip(int context)
 
   /* Copy from the fragment context info buffer first */
   memcpy((uint8_t *)UIP_IP_BUF, (uint8_t *)frag_info[context].first_frag,
-	 frag_info[context].first_frag_len);
+   frag_info[context].first_frag_len);
   for(i = 0; i < SICSLOWPAN_FRAGMENT_BUFFERS; i++) {
     /* And also copy all matching fragments */
     if(frag_buf[i].len > 0 && frag_buf[i].index == context) {
       memcpy((uint8_t *)UIP_IP_BUF + (uint16_t)(frag_buf[i].offset << 3),
-	     (uint8_t *)frag_buf[i].data, frag_buf[i].len);
+       (uint8_t *)frag_buf[i].data, frag_buf[i].len);
     }
   }
   /* deallocate all the fragments for this context */
@@ -983,7 +983,7 @@ uncompress_hdr_iphc(uint8_t *buf, uint16_t ip_len)
         SICSLOWPAN_IP_BUF(buf)->vtc = 0x60 | ((tmp >> 2) & 0x0f);
         /* ECN rolled down two steps + lowest DSCP bits at top two bits */
         SICSLOWPAN_IP_BUF(buf)->tcflow = ((tmp >> 2) & 0x30) | (tmp << 6) |
-	  (SICSLOWPAN_IP_BUF(buf)->tcflow & 0x0f);
+    (SICSLOWPAN_IP_BUF(buf)->tcflow & 0x0f);
       } else {
         /* Traffic class is compressed (set version and no TC)*/
         SICSLOWPAN_IP_BUF(buf)->vtc = 0x60;
@@ -998,7 +998,7 @@ uncompress_hdr_iphc(uint8_t *buf, uint16_t ip_len)
       /* Version and flow label are compressed */
       if((iphc0 & SICSLOWPAN_IPHC_TC_C) == 0) {
         /* Traffic class is inline */
-	SICSLOWPAN_IP_BUF(buf)->vtc = 0x60 | ((*hc06_ptr >> 2) & 0x0f);
+  SICSLOWPAN_IP_BUF(buf)->vtc = 0x60 | ((*hc06_ptr >> 2) & 0x0f);
           SICSLOWPAN_IP_BUF(buf)->tcflow = ((*hc06_ptr << 6) & 0xC0) | ((*hc06_ptr >> 2) & 0x30);
           SICSLOWPAN_IP_BUF(buf)->flow = 0;
           hc06_ptr += 1;
@@ -1110,55 +1110,55 @@ uncompress_hdr_iphc(uint8_t *buf, uint16_t ip_len)
       PRINTF("IPHC: Incoming header value: %i\n", *hc06_ptr);
       switch(*hc06_ptr & SICSLOWPAN_NHC_UDP_CS_P_11) {
       case SICSLOWPAN_NHC_UDP_CS_P_00:
-	/* 1 byte for NHC, 4 byte for ports, 2 bytes chksum */
-	memcpy(&SICSLOWPAN_UDP_BUF(buf)->srcport, hc06_ptr + 1, 2);
-	memcpy(&SICSLOWPAN_UDP_BUF(buf)->destport, hc06_ptr + 3, 2);
-	PRINTF("IPHC: Uncompressed UDP ports (ptr+5): %x, %x\n",
-	       UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->srcport),
-	       UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->destport));
-	hc06_ptr += 5;
-	break;
+  /* 1 byte for NHC, 4 byte for ports, 2 bytes chksum */
+  memcpy(&SICSLOWPAN_UDP_BUF(buf)->srcport, hc06_ptr + 1, 2);
+  memcpy(&SICSLOWPAN_UDP_BUF(buf)->destport, hc06_ptr + 3, 2);
+  PRINTF("IPHC: Uncompressed UDP ports (ptr+5): %x, %x\n",
+         UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->srcport),
+         UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->destport));
+  hc06_ptr += 5;
+  break;
 
       case SICSLOWPAN_NHC_UDP_CS_P_01:
         /* 1 byte for NHC + source 16bit inline, dest = 0xF0 + 8 bit inline */
-	PRINTF("IPHC: Decompressing destination\n");
-	memcpy(&SICSLOWPAN_UDP_BUF(buf)->srcport, hc06_ptr + 1, 2);
-	SICSLOWPAN_UDP_BUF(buf)->destport = UIP_HTONS(SICSLOWPAN_UDP_8_BIT_PORT_MIN + (*(hc06_ptr + 3)));
-	PRINTF("IPHC: Uncompressed UDP ports (ptr+4): %x, %x\n",
-	       UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->srcport), UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->destport));
-	hc06_ptr += 4;
-	break;
+  PRINTF("IPHC: Decompressing destination\n");
+  memcpy(&SICSLOWPAN_UDP_BUF(buf)->srcport, hc06_ptr + 1, 2);
+  SICSLOWPAN_UDP_BUF(buf)->destport = UIP_HTONS(SICSLOWPAN_UDP_8_BIT_PORT_MIN + (*(hc06_ptr + 3)));
+  PRINTF("IPHC: Uncompressed UDP ports (ptr+4): %x, %x\n",
+         UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->srcport), UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->destport));
+  hc06_ptr += 4;
+  break;
 
       case SICSLOWPAN_NHC_UDP_CS_P_10:
         /* 1 byte for NHC + source = 0xF0 + 8bit inline, dest = 16 bit inline*/
-	PRINTF("IPHC: Decompressing source\n");
-	SICSLOWPAN_UDP_BUF(buf)->srcport = UIP_HTONS(SICSLOWPAN_UDP_8_BIT_PORT_MIN +
-					    (*(hc06_ptr + 1)));
-	memcpy(&SICSLOWPAN_UDP_BUF(buf)->destport, hc06_ptr + 2, 2);
-	PRINTF("IPHC: Uncompressed UDP ports (ptr+4): %x, %x\n",
-	       UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->srcport), UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->destport));
-	hc06_ptr += 4;
-	break;
+  PRINTF("IPHC: Decompressing source\n");
+  SICSLOWPAN_UDP_BUF(buf)->srcport = UIP_HTONS(SICSLOWPAN_UDP_8_BIT_PORT_MIN +
+              (*(hc06_ptr + 1)));
+  memcpy(&SICSLOWPAN_UDP_BUF(buf)->destport, hc06_ptr + 2, 2);
+  PRINTF("IPHC: Uncompressed UDP ports (ptr+4): %x, %x\n",
+         UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->srcport), UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->destport));
+  hc06_ptr += 4;
+  break;
 
       case SICSLOWPAN_NHC_UDP_CS_P_11:
-	/* 1 byte for NHC, 1 byte for ports */
-	SICSLOWPAN_UDP_BUF(buf)->srcport = UIP_HTONS(SICSLOWPAN_UDP_4_BIT_PORT_MIN +
-					    (*(hc06_ptr + 1) >> 4));
-	SICSLOWPAN_UDP_BUF(buf)->destport = UIP_HTONS(SICSLOWPAN_UDP_4_BIT_PORT_MIN +
-					     ((*(hc06_ptr + 1)) & 0x0F));
-	PRINTF("IPHC: Uncompressed UDP ports (ptr+2): %x, %x\n",
-	       UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->srcport), UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->destport));
-	hc06_ptr += 2;
-	break;
+  /* 1 byte for NHC, 1 byte for ports */
+  SICSLOWPAN_UDP_BUF(buf)->srcport = UIP_HTONS(SICSLOWPAN_UDP_4_BIT_PORT_MIN +
+              (*(hc06_ptr + 1) >> 4));
+  SICSLOWPAN_UDP_BUF(buf)->destport = UIP_HTONS(SICSLOWPAN_UDP_4_BIT_PORT_MIN +
+               ((*(hc06_ptr + 1)) & 0x0F));
+  PRINTF("IPHC: Uncompressed UDP ports (ptr+2): %x, %x\n",
+         UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->srcport), UIP_HTONS(SICSLOWPAN_UDP_BUF(buf)->destport));
+  hc06_ptr += 2;
+  break;
 
       default:
         PRINTF("sicslowpan uncompress_hdr: error unsupported UDP compression\n");
         return;
       }
       if(!checksum_compressed) { /* has_checksum, default  */
-	memcpy(&SICSLOWPAN_UDP_BUF(buf)->udpchksum, hc06_ptr, 2);
-	hc06_ptr += 2;
-	PRINTF("IPHC: sicslowpan uncompress_hdr: checksum included\n");
+  memcpy(&SICSLOWPAN_UDP_BUF(buf)->udpchksum, hc06_ptr, 2);
+  hc06_ptr += 2;
+  PRINTF("IPHC: sicslowpan uncompress_hdr: checksum included\n");
       } else {
         PRINTF("IPHC: sicslowpan uncompress_hdr: checksum *NOT* included\n");
       }
@@ -1658,34 +1658,34 @@ input(void)
 #endif
 #if IS_LT_7
 #if (NODE_ID == 0x01)
-	if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x02) || (ipaddr_src == 0x03)) && (hop_count == 1)) &&
+  if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x02) || (ipaddr_src == 0x03)) && (hop_count == 1)) &&
     !(((ipaddr_src == 0x04) || (ipaddr_src == 0x05)) && (hop_count == 2))) {
-		PRINTF("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
-		return;
-	}
+    PRINTF("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+    return;
+  }
 #elif (NODE_ID == 0x02)
-	if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x02)) && (hop_count == 1))) {
-		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
-		return;
-	}
+  if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x02)) && (hop_count == 1))) {
+    printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+    return;
+  }
 #elif (NODE_ID == 0x03)
-	if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x03) || (ipaddr_src == 0x04) ||
+  if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x03) || (ipaddr_src == 0x04) ||
     (ipaddr_src == 0x05)) && (hop_count == 1))){
-		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
-		return;
-	}
+    printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+    return;
+  }
 #elif (NODE_ID == 0x04)
-	if(!(((ipaddr_src == 0x03) || (ipaddr_src == 0x04)) && (hop_count == 1)) &&
+  if(!(((ipaddr_src == 0x03) || (ipaddr_src == 0x04)) && (hop_count == 1)) &&
     !((ipaddr_src == 0x01) && (hop_count == 2))) {
-		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
-		return;
-	}
+    printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+    return;
+  }
 #elif (NODE_ID == 0x05)
-	if(!(((ipaddr_src == 0x03) || (ipaddr_src == 0x05)) && (hop_count == 1)) &&
+  if(!(((ipaddr_src == 0x03) || (ipaddr_src == 0x05)) && (hop_count == 1)) &&
     !((ipaddr_src == 0x01) && (hop_count == 2))) {
-		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
-		return;
-	}
+    printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
+    return;
+  }
 #endif
 
 #elif IS_LT_6
@@ -1791,7 +1791,7 @@ input(void)
     uip_len = packetbuf_payload_len + uncomp_hdr_len;
 #endif /* SICSLOWPAN_CONF_FRAG */
     PRINTFI("sicslowpan input: IP packet ready (length %d)\n",
-	    uip_len);
+      uip_len);
 
 #if DEBUG
     {

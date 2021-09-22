@@ -29,9 +29,9 @@
  * This file is part of the Contiki operating system.
  *
  * \file
- *	Public configuration and API declarations for ContikiRPL.
+ *  Public configuration and API declarations for ContikiRPL.
  * \author
- *	Joakim Eriksson <joakime@sics.se> & Nicolas Tsiftes <nvt@sics.se>
+ *  Joakim Eriksson <joakime@sics.se> & Nicolas Tsiftes <nvt@sics.se>
  *
  */
 
@@ -95,7 +95,7 @@
 #ifdef RPL_CONF_DEFAULT_INSTANCE
 #define RPL_DEFAULT_INSTANCE RPL_CONF_DEFAULT_INSTANCE
 #else
-#define RPL_DEFAULT_INSTANCE	       0x1e
+#define RPL_DEFAULT_INSTANCE         0x1e
 #endif /* RPL_CONF_DEFAULT_INSTANCE */
 
 /*
@@ -155,7 +155,7 @@
 #endif /* RPL_CONF_DAG_LIFETIME */
 
 /*
- * 
+ *
  */
 #ifndef RPL_CONF_DAO_SPECIFY_DAG
   #if RPL_MAX_DAG_PER_INSTANCE > 1

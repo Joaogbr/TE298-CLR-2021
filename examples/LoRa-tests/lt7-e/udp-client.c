@@ -55,10 +55,10 @@
 #define PERIOD 5
 #endif
 
-#define START_INTERVAL    60
-#define SEND_INTERVAL    (PERIOD * CLOCK_SECOND)
-#define SEND_TIME    (random_rand() % (SEND_INTERVAL))
-#define MAX_PAYLOAD_LEN    30
+#define START_INTERVAL		60
+#define SEND_INTERVAL		(PERIOD * CLOCK_SECOND)
+#define SEND_TIME		(random_rand() % (SEND_INTERVAL))
+#define MAX_PAYLOAD_LEN		30
 
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
@@ -127,7 +127,7 @@ print_local_addresses(void)
       PRINTF("\n");
       /* hack to make address "final" */
       if (state == ADDR_TENTATIVE) {
-  uip_ds6_if.addr_list[i].state = ADDR_PREFERRED;
+	uip_ds6_if.addr_list[i].state = ADDR_PREFERRED;
       }
     }
   }
@@ -200,7 +200,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   PRINTF("Created a connection with the server ");
   PRINT6ADDR(&client_conn->ripaddr);
   PRINTF(" local/remote port %u/%u\n",
-  UIP_HTONS(client_conn->lport), UIP_HTONS(client_conn->rport));
+	UIP_HTONS(client_conn->lport), UIP_HTONS(client_conn->rport));
 
 #if WITH_COMPOWER
   powertrace_sniff(POWERTRACE_ON);
@@ -250,14 +250,33 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
     if(etimer_expired(&periodic)) {
       etimer_reset(&periodic);
-      ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
+      if(seq_id < 250){
+        ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
+      } else {
+        printf("\nEnergest:\n");
+        printf(" CPU %4lu LPM %4lu IRQ %4lu Total time %llu\n",
+           (energest_type_time(ENERGEST_TYPE_CPU)),
+           (energest_type_time(ENERGEST_TYPE_LPM)),
+           (energest_type_time(ENERGEST_TYPE_IRQ)),
+           (ENERGEST_GET_TOTAL_TIME()));
+        printf(" Radio LISTEN %4lu TRANSMIT %4lu CAD %4lu OFF %llu\n",
+           (energest_type_time(ENERGEST_TYPE_LISTEN)),
+           (energest_type_time(ENERGEST_TYPE_TRANSMIT)),
+           (energest_type_time(ENERGEST_TYPE_CAD)),
+           (ENERGEST_GET_TOTAL_TIME()
+                      - energest_type_time(ENERGEST_TYPE_TRANSMIT)
+                      - energest_type_time(ENERGEST_TYPE_LISTEN)
+                      - energest_type_time(ENERGEST_TYPE_CAD)));
+        PROCESS_EXIT();
+      }
+
 
 #if WITH_COMPOWER
       if (print == 0) {
-  powertrace_print("#P");
+	powertrace_print("#P");
       }
       if (++print == 3) {
-  print = 0;
+	print = 0;
       }
 #endif
 

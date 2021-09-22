@@ -559,7 +559,7 @@ broadcast_rate_drop(void)
 /*---------------------------------------------------------------------------*/
 static int
 send_packet(mac_callback_t mac_callback, void *mac_callback_ptr,
-	    struct rdc_buf_list *buf_list,
+      struct rdc_buf_list *buf_list,
             int is_receiver_awake)
 {
   rtimer_clock_t t0;
@@ -752,7 +752,7 @@ send_packet(mac_callback_t mac_callback, void *mac_callback_ptr,
 
 #if RDC_CONF_HARDWARE_ACK
      /* For radios that block in the transmit routine and detect the
-	ACK in hardware */
+  ACK in hardware */
       if(ret == RADIO_TX_OK) {
         if(!is_broadcast) {
           got_strobe_ack = 1;
@@ -835,14 +835,14 @@ send_packet(mac_callback_t mac_callback, void *mac_callback_ptr,
 #if WITH_PHASE_OPTIMIZATION
   if(is_known_receiver && got_strobe_ack) {
     PRINTF("no miss %d wake-ups %d\n",
-	   packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[0],
+     packetbuf_addr(PACKETBUF_ADDR_RECEIVER)->u8[0],
            strobes);
   }
 
   if(!is_broadcast) {
     if(collisions == 0 && is_receiver_awake == 0) {
       phase_update(packetbuf_addr(PACKETBUF_ADDR_RECEIVER),
-		   encounter_time, ret);
+       encounter_time, ret);
     }
   }
 #endif /* WITH_PHASE_OPTIMIZATION */
@@ -987,7 +987,7 @@ input_packet(void)
       if(we_are_receiving_burst) {
         on();
         /* Set a timer to turn the radio off in case we do not receive
-	   a next packet */
+     a next packet */
         ctimer_set(&ct, INTER_PACKET_DEADLINE, recv_burst_off, NULL);
       } else {
         off();

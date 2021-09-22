@@ -122,7 +122,7 @@ assert_nbr_routes_list_sane(void)
 #if UIP_DS6_NOTIFICATIONS
 static void
 call_route_callback(int event, uip_ipaddr_t *route,
-		    uip_ipaddr_t *nexthop)
+        uip_ipaddr_t *nexthop)
 {
   int num;
   struct uip_ds6_notification *n;
@@ -141,7 +141,7 @@ call_route_callback(int event, uip_ipaddr_t *route,
 /*---------------------------------------------------------------------------*/
 void
 uip_ds6_notification_add(struct uip_ds6_notification *n,
-			 uip_ds6_notification_callback c)
+       uip_ds6_notification_callback c)
 {
   if(n != NULL && c != NULL) {
     n->callback = c;
@@ -274,7 +274,7 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
       found_route = r;
       /* check if total match - e.g. all 128 bits do match */
       if(longestmatch == 128) {
-	break;
+  break;
       }
     }
   }
@@ -307,7 +307,7 @@ uip_ds6_route_lookup(uip_ipaddr_t *addr)
 /*---------------------------------------------------------------------------*/
 uip_ds6_route_t *
 uip_ds6_route_add(uip_ipaddr_t *ipaddr, uint8_t length,
-		  uip_ipaddr_t *nexthop)
+      uip_ipaddr_t *nexthop)
 {
 #if (UIP_CONF_MAX_ROUTES != 0)
   uip_ds6_route_t *r;
@@ -646,7 +646,7 @@ uip_ds6_defrt_rm(uip_ds6_defrt_t *defrt)
       ANNOTATE("#L %u 0\n", defrt->ipaddr.u8[sizeof(uip_ipaddr_t) - 1]);
 #if UIP_DS6_NOTIFICATIONS
       call_route_callback(UIP_DS6_NOTIFICATION_DEFRT_RM,
-			  &defrt->ipaddr, &defrt->ipaddr);
+        &defrt->ipaddr, &defrt->ipaddr);
 #endif
       return;
     }
