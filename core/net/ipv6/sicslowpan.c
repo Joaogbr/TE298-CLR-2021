@@ -41,6 +41,8 @@
  * \author Julien Abeille <jabeille@cisco.com>
  * \author Joakim Eriksson <joakime@sics.se>
  * \author Joel Hoglund <joel@sics.se>
+ * \modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
 
 /**
@@ -1636,7 +1638,7 @@ input(void)
       return;
   }
 
-  //PRINTF("Proto field: %d\n", UIP_IP_BUF->proto);
+  // LoRa Packet filtering
 
 #if (NETSTACK_CONF_WITH_IPV6 && UIP_CONF_IPV6_RPL)
 #if (IS_LT_7 || IS_LT_6)
@@ -1662,11 +1664,6 @@ input(void)
 		return;
 	}
 #elif (NODE_ID == 0x02)
-  /*uint8_t ipaddr_dst = UIP_IP_BUF->destipaddr.u8[sizeof(UIP_IP_BUF->destipaddr.u8) - 1];
-  if(ipaddr_dst != 0x02){
-    printf("Invalid option, node 2 is a leaf node\n");
-		return;
-  }*/
 	if(!(((ipaddr_src == 0x01) || (ipaddr_src == 0x02)) && (hop_count == 1))) {
 		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
 		return;
@@ -1678,22 +1675,12 @@ input(void)
 		return;
 	}
 #elif (NODE_ID == 0x04)
-  /*uint8_t ipaddr_dst = UIP_IP_BUF->destipaddr.u8[sizeof(UIP_IP_BUF->destipaddr.u8) - 1];
-  if(ipaddr_dst != 0x04){
-    printf("Invalid option, node 4 is a leaf node\n");
-    return;
-  }*/
 	if(!(((ipaddr_src == 0x03) || (ipaddr_src == 0x04)) && (hop_count == 1)) &&
     !((ipaddr_src == 0x01) && (hop_count == 2))) {
 		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);
 		return;
 	}
 #elif (NODE_ID == 0x05)
-  /*uint8_t ipaddr_dst = UIP_IP_BUF->destipaddr.u8[sizeof(UIP_IP_BUF->destipaddr.u8) - 1];
-  if(ipaddr_dst != 0x05){
-    printf("Invalid option, node 5 is a leaf node\n");
-    return;
-  }*/
 	if(!(((ipaddr_src == 0x03) || (ipaddr_src == 0x05)) && (hop_count == 1)) &&
     !((ipaddr_src == 0x01) && (hop_count == 2))) {
 		printf("Invalid route %d -> %d (%d-hop)\n", ipaddr_src, NODE_ID, hop_count);

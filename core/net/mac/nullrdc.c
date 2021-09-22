@@ -36,6 +36,8 @@
  * \author
  *         Adam Dunkels <adam@sics.se>
  *         Niclas Finne <nfi@sics.se>
+ * \modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
 
 #include "net/mac/mac-sequence.h"
@@ -234,7 +236,6 @@ send_one_packet(mac_callback_t sent, void *ptr)
 
 #if IS_RADIO_LORA
   /* Check if there are any transmissions by others. */
-  /* TODO: why does this give collisions before sending with the mc1322x? */
   uint8_t collisions = 0;
   rtimer_clock_t t0;
   int i;
@@ -246,24 +247,19 @@ send_one_packet(mac_callback_t sent, void *ptr)
     for(i = 0; i < CCA_COUNT_MAX_TX; ++i) {
       PRINTF("Channel check before transmission\n");
       t0 = RTIMER_NOW();
-      //on();
 #if CCA_CHECK_TIME > 0
       while(RTIMER_CLOCK_LT(RTIMER_NOW(), t0 + CCA_CHECK_TIME)) { }
 #endif
       if(NETSTACK_RADIO.channel_clear() == 0) {
         collisions++;
-        //off();
         break;
       }
-      //off();
       t0 = RTIMER_NOW();
       while(RTIMER_CLOCK_LT(RTIMER_NOW(), t0 + CCA_SLEEP_TIME)) { }
     }
 
     if(collisions > 0) {
-      //off();
       PRINTF("csma-rdc: collision CCA\n");
-      //return MAC_TX_COLLISION;
       ret = MAC_TX_COLLISION;
     } else
 #endif /* IS_RADIO_LORA */

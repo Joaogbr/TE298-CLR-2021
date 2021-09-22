@@ -67,12 +67,6 @@ static uip_ipaddr_t server_ipaddr;
 PROCESS(udp_client_process, "UDP client process");
 AUTOSTART_PROCESSES(&udp_client_process);
 /*---------------------------------------------------------------------------*/
-static unsigned long
-to_seconds(uint64_t time)
-{
-  return (unsigned long)(time / ENERGEST_SECOND);
-}
-/*---------------------------------------------------------------------------*/
 static int seq_id;
 static int reply;
 
@@ -256,26 +250,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
     if(etimer_expired(&periodic)) {
       etimer_reset(&periodic);
-      if(seq_id < 250){
-        ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
-      } else {
-        printf("\nEnergest:\n");
-        printf(" CPU %4lu LPM %4lu IRQ %4lu Total time %lu\n",
-           (energest_type_time(ENERGEST_TYPE_CPU)),
-           (energest_type_time(ENERGEST_TYPE_LPM)),
-           (energest_type_time(ENERGEST_TYPE_IRQ)),
-           (ENERGEST_GET_TOTAL_TIME()));
-        printf(" Radio LISTEN %4lu TRANSMIT %4lu CAD %4lu OFF %4lu\n",
-           (energest_type_time(ENERGEST_TYPE_LISTEN)),
-           (energest_type_time(ENERGEST_TYPE_TRANSMIT)),
-           (energest_type_time(ENERGEST_TYPE_CAD)),
-           (ENERGEST_GET_TOTAL_TIME()
-                      - energest_type_time(ENERGEST_TYPE_TRANSMIT)
-                      - energest_type_time(ENERGEST_TYPE_LISTEN)
-                      - energest_type_time(ENERGEST_TYPE_CAD)));
-        PROCESS_EXIT();
-      }
-
+      ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
 
 #if WITH_COMPOWER
       if (print == 0) {
