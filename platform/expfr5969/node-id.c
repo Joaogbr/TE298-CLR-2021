@@ -32,7 +32,7 @@
  */
 
 /**
- * \Contiki port, author 
+ * \Contiki port, author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  * \Adopted from:
  *         Andrea Gaglione <and.gaglione@gmail.com>
@@ -61,7 +61,7 @@ node_id_restore(void)
   } else {
     node_mac[0] = 0xDA; // Hardcoded for EXP-MSP430FR5731
     node_mac[1] = 0x0A; // Hardcoded for Revision A
-    node_mac[3] = 0x00; // Hardcoded to arbitrary even number so that the 802.15.4 MAC address
+    node_mac[2] = 0x00; // Hardcoded to arbitrary even number so that the 802.15.4 MAC address
                         // is compatible with an Ethernet MAC address - byte 0 (byte 2 in the DS ID)
     node_mac[3] = 0x00; // Hardcoded
     node_mac[4] = 0x00; // Hardcoded

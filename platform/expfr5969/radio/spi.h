@@ -1,8 +1,10 @@
 /*
  * spi.h
  *
- *  Rajeev Piyare <rajeev.piyare@hotmail.com>
- *  Created : 2018-02-12
+ *\original author
+ *         Rajeev Piyare <rajeev.piyare@hotmail.com>
+ *\modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
 
 #ifndef SPI_H_

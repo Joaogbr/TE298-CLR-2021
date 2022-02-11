@@ -129,7 +129,7 @@ void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
   rx_msg_size = size;
   memcpy(rx_msg_buf, payload, rx_msg_size);
 
-   // save Rssi and SNR
+  // save Rssi and SNR
   //rx_last_snr = snr;
   last_rssi = rssi;
 
@@ -213,7 +213,7 @@ PROCESS_THREAD(sx1276_process, ev, data)
 static int
 sx1276_radio_init(void)
 {
-  PRINTF("Initializing sx1276\n");
+  PRINTF("Initializing SX1276\n");
 
   spi_init();
 

@@ -30,14 +30,17 @@
  *
  * -----------------------------------------------------------------
  *
- * Author  : Rajeev Piyare <rajeev.piyare@hotmail.com>
+ *\original author
+ *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  * Created : 2018-02-02
+ *\modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
 
 #include "contiki-conf.h"
 #include "dev/leds.h"
 
-/* LED ports for LoRa + WuR platform V3.0 */
+/* LED ports for MSP430FR5969 Launchpad */
 #define LEDS_CONF_RED    BIT6
 #define LEDS_CONF_GREEN  BIT0
 
@@ -60,7 +63,9 @@ leds_arch_get(void)
 void
 leds_arch_set(unsigned char leds)
 {
-  P4OUT = (P4OUT & ~LEDS_CONF_RED)  | ((leds & LEDS_RED) ? LEDS_CONF_RED : 0);
-  P1OUT = (P1OUT & ~LEDS_CONF_GREEN)|((leds & LEDS_GREEN) ? LEDS_CONF_GREEN : 0);
+  P4OUT = (P4OUT & ~LEDS_CONF_RED)
+  | ((leds & LEDS_RED) ? LEDS_CONF_RED : 0);
+  P1OUT = (P1OUT & ~LEDS_CONF_GREEN)
+  | ((leds & LEDS_GREEN) ? LEDS_CONF_GREEN : 0);
 }
 /*---------------------------------------------------------------------------*/

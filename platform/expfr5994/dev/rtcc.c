@@ -34,11 +34,14 @@
 /**
  * \file
  *         rtcc.c
- * \author
+ * \original author
  *         David Rodenas-Herraiz <dr424@cam.ac.uk>
  *
+ * \modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
+ *
  * \brief
- *         Driver for real-time clock RTC_B module in MSP430FR5969
+ *         Driver for real-time clock RTC_B module in MSP430FR5994
  *
  * \note   This file is adapted from the RE-Mote on-board ultra-low power RTCC
  *         driver

@@ -138,7 +138,7 @@ rtimer_arch_sleep(rtimer_clock_t howlong)
 	while(timeout == 0);
 
   /* Stop Timer0_A. */
-  TA0CTL &= ~MC;
+  TA0CTL &= ~MC_3;
 
   ENERGEST_SWITCH(ENERGEST_TYPE_LPM, ENERGEST_TYPE_CPU);
 
@@ -167,7 +167,7 @@ rtimer_arch_sleep_until(rtimer_clock_t howlong, bool *cond_var)
   }
 
   /* Stop Timer0_A. */
-  TA0CTL &= ~MC;
+  TA0CTL &= ~MC_3;
 
   ENERGEST_SWITCH(ENERGEST_TYPE_LPM, ENERGEST_TYPE_CPU);
 

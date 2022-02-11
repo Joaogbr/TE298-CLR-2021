@@ -44,7 +44,7 @@ const struct sensors_sensor button_sensor;
 static struct timer debouncetimer;
 static int status(int type);
 
-/* Button port for FR5969 Launchpad V3.0 -> P4.5 */
+/* Button port for FR5969 Launchpad -> P4.5 */
 HWCONF_PINx(BUTTON, 4, 5, 0);
 HWCONF_IRQx(BUTTON, 4, 5);
 

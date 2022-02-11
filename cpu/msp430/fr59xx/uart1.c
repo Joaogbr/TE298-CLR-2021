@@ -32,7 +32,7 @@
  */
 
 /*
- * \Contiki port, author 
+ * \Contiki port, author
  *         Rajeev Piyare <rajeev.piyare@hotmail.com>
  */
 

@@ -37,6 +37,8 @@
  * \Adopted from:
  *         Andrea Gaglione <and.gaglione@gmail.com>
  *         David Rodenas-Herraiz <dr424@cam.ac.uk>
+ *\modified by
+ *         João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
 
 

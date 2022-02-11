@@ -88,11 +88,11 @@ endif
 
 %.upload: %.hex
 	@echo "Programming EXPFR5969 with $< using MSP-FET Flash Emulation tool"
-	~/ti/MSPFlasher_1.3.20/MSP430Flasher -n msp430fr5969 -i $(ACMPORT) -e ERASE_MAIN -w $< -v -z [VCC]
+	MSP430Flasher -n msp430fr5969 -i $(ACMPORT) -e ERASE_MAIN -w $< -v -z [VCC]
 
 %.upload-clean: %.hex
 	@echo "Programming EXPFR5969 with $< using MSP-FET"
-	msp430flasher -n msp430fr5969 -w $< -v -z [VCC]
+	MSP430Flasher -n msp430fr5969 -w $< -v -z [VCC]
 
 # Check if we are running under Windows
 ifeq ($(HOST_OS),Windows)
@@ -114,4 +114,5 @@ login:
 
 MODULES += core/net \
 		   core/net/mac \
-		   core/net/llsec
+		   core/net/llsec \
+#       core/net/mac/contikimac

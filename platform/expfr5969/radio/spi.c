@@ -30,10 +30,13 @@
  *
  * spi.c
  *
- * \Contiki port, author
+ * \Contiki port, original author
  *  Rajeev Piyare <rajeev.piyare@hotmail.com>
  *  Created : 2018-02-12
+ * \modified by
+ *  João Gabriel Pazinato de Bittencourt <joaogabrielpazinatobittencourt@gmail.com>
  */
+
 #include "contiki.h"
 #include <msp430.h>
 #include "spi.h"
@@ -95,15 +98,13 @@ void spi_init(void)
 
   P1SEL0 &= ~(MOSI | MISO);
   P1SEL1 |= (MOSI | MISO);
-  //P1OUT &= ~MISO; // Pull down MISO?
 
   // Initialize ports for communication with SPI units.
-
   UCB0CTLW0 = UCSWRST;               // Put state machine in reset
   UCB0CTLW0 |= UCSSEL_2;             // SMCLK
   UCB0CTLW0 |= UCMST | UCSYNC | UCCKPL | UCMSB; // MSB-first 8-bit, Master, Synchronous, 3 pin SPI master, no ste, watch-out for clock-phase UCCKPH
 
-  UCB0BR0 = 0x02;
+  UCB0BR0 = 0x00;
   UCB0BR1 = 0x00;
 
   UCB0CTLW0 &= ~UCSWRST;  // Initializing USCI and Remove RESET before enabling interrupts
@@ -116,7 +117,6 @@ void spi_enable(){
 
   P1SEL0 &= ~(MOSI | MISO);
   P1SEL1 |= (MOSI | MISO);
-  //P1OUT &= ~MISO; // Pull down MISO?
 }
 
 void spi_disable(){

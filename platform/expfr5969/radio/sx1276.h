@@ -7,7 +7,7 @@
 #define XTAL_FREQ                                   32000000
 #define FREQ_STEP                                   61.03515625
 
-#define RX_BUFFER_SIZE                              256
+#define RX_BUFFER_SIZE                              128
 
 #define RSSI_OFFSET_LF                              -164
 #define RSSI_OFFSET_HF                              -157
@@ -193,7 +193,10 @@ void sx1276_set_txconfig(radio_modem_t modem, int8_t power, uint32_t fdev,
                          bool fixLen, bool crcOn, bool freqHopOn,
                          uint8_t hopPeriod, bool iqInverted, uint32_t timeout);
 
-uint32_t sx1276_get_timeonair(radio_modem_t modem, uint8_t pktLen);
+uint32_t sx1276_get_timeonair(radio_modem_t modem, uint32_t bandwidth,
+                              uint32_t datarate, uint8_t coderate,
+                              uint16_t preambleLen, bool fixLen, uint8_t payloadLen,
+                              bool crcOn);
 
 void sx1276_set_channel(uint32_t freq);
 void sx1276_set_modem(radio_modem_t modem);
